@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">AudioPlayer</string>
+
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
+
+    <string name="hello_world">Hello world!</string>
+
+    <string name="action_settings">Settings</string>
+
+<!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="btn_change">change</string>
+    <string name="tv_song_title">Song title</string>
+    <string name="tv_artist">Artist</string>
+    <string name="tv_album">Album</string>
+    <string name="tv_btn_previous">btn_previous</string>
+    <string name="text_btn_play_and_pause">btn_play_and_pause</string>
+    <string name="text_btn_stop">btn_stop</string>
+    <string name="text_btn_next">btn_next</string>
+    <string name="tv_time_played">0.00</string>
+    <string name="tv_total_running_time">0.00</string>
+    <string name="text_btn_play">btn_play</string>
+    <string name="tv_song_title_item">Soung title</string>
+    <string name="tv_artist_item">Artist</string>
+    <string name="tv_album_item">Running time</string>
+</resources>

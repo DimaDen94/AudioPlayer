@@ -1,3 +1,11 @@
+/app/proguard-rules.pro
+/app/app.iml
+/AudioPlayer.iml
+/gradlew
+/settings.gradle
+/gradlew.bat
+/app/build
+/.idea
 # Built application files
 *.apk
 *.ap_
