@@ -84,7 +84,9 @@
                 android:id="@+id/btn_play_and_pause"
                 android:src="@mipmap/ic_pause"
                 android:contentDescription="@string/text_btn_play_and_pause"
-                android:layout_gravity="top" />
+                android:transitionName="on"
+                android:layout_gravity="top"
+                android:nestedScrollingEnabled="false" />
 
             <ImageButton
                 android:layout_width="90dp"
