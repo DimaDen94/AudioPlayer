@@ -21,7 +21,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tv_song_title_item"
-            android:id="@+id/textView"
+            android:id="@+id/tv_item_title"
             android:layout_gravity="center_horizontal"
             android:textSize="18sp" />
 
@@ -29,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tv_artist_item"
-            android:id="@+id/textView2"
+            android:id="@+id/tv_item_artist"
             android:layout_gravity="center_horizontal"
             android:textSize="18sp" />
 
@@ -37,7 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tv_album_item"
-            android:id="@+id/textView3"
+            android:id="@+id/tv_item_rTime"
             android:layout_gravity="right"
             android:textSize="18sp"
             android:layout_marginRight="16dp" />

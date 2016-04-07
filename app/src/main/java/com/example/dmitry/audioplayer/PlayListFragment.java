@@ -1,6 +1,9 @@
 package com.example.dmitry.audioplayer;
 
+import android.content.ContentResolver;
+import android.database.Cursor;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.content.Context;
@@ -11,8 +14,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 
 public class PlayListFragment extends Fragment implements View.OnClickListener {
@@ -24,7 +32,8 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     private TextView tvTitle;
     private TextView tvArtist;
     private TextView tvAlbum;
-
+    private ArrayList<Song> songList;
+    private ListView playList;
 
 
 
@@ -47,6 +56,7 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
 
+
         return inflater.inflate(R.layout.fragment_play_list, container, false);
     }
 
@@ -54,6 +64,22 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     public void onStart() {
         super.onStart();
         initViews();
+        //retrieve list view
+        //instantiate list
+        songList = new ArrayList<Song>();
+        //get songs from device
+        getSongList();
+        //sort alphabetically by title
+        Collections.sort(songList, new Comparator<Song>() {
+            public int compare(Song a, Song b) {
+                return a.getTitle().compareTo(b.getTitle());
+            }
+        });
+        //create and set adapter
+        SongAdapter songAdt = new SongAdapter(context, songList);
+        playList.setAdapter(songAdt);
+
+        //setup controller
 
     }
 
@@ -65,6 +91,7 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         buttonPlayStop = (ImageButton) getActivity().findViewById(R.id.btn_play_and_pause);
         buttonPlayStop.setOnClickListener(this);
         mediaPlayer = MediaPlayer.create(context, R.raw.test_song);
+        playList= (ListView) getActivity().findViewById(R.id.audioList);
 
         seekBar = (SeekBar) getActivity().findViewById(R.id.seekBar);
 
@@ -125,4 +152,33 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         seekBar.setMax(mediaPlayer.getDuration());
         playAndStop();
     }
+
+
+
+    public void getSongList(){
+        //query external audio
+        ContentResolver musicResolver = getActivity().getContentResolver();
+        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
+        //iterate over results if valid
+        if(musicCursor!=null && musicCursor.moveToFirst()){
+            //get columns
+            int titleColumn = musicCursor.getColumnIndex
+                    (android.provider.MediaStore.Audio.Media.TITLE);
+            int idColumn = musicCursor.getColumnIndex
+                    (android.provider.MediaStore.Audio.Media._ID);
+            int artistColumn = musicCursor.getColumnIndex
+                    (android.provider.MediaStore.Audio.Media.ARTIST);
+            //add songs to list
+            do {
+                long thisId = musicCursor.getLong(idColumn);
+                String thisTitle = musicCursor.getString(titleColumn);
+                String thisArtist = musicCursor.getString(artistColumn);
+                songList.add(new Song(thisId, thisTitle, thisArtist));
+            }
+            while (musicCursor.moveToNext());
+        }
+    }
+
+
 }
