@@ -82,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
                     return PlayListFragment.newInstance(context);
                 default:
                     return PlaceholderFragment.newInstance(position + 1);
-
             }
         }
 

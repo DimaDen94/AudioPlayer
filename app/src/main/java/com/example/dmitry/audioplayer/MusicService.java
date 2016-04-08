@@ -38,7 +38,8 @@ public class MusicService extends Service implements
     private final IBinder musicBind = new MusicBinder();
     //title of current song
     private String songTitle="";
-    //notification id
+    //notification
+    Notification not;
     private static final int NOTIFY_ID=1;
     //shuffle flag and random
     private boolean shuffle=false;
@@ -115,9 +116,9 @@ public class MusicService extends Service implements
         }
         catch(Exception e){
             Log.e("MUSIC SERVICE", "Error setting data source", e);
+            songPosn++;
+            playSong();
         }
-
-
     }
 
     //set the song
@@ -152,17 +153,22 @@ public class MusicService extends Service implements
                 notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification.Builder builder = new Notification.Builder(this);
-        Notification not;
+
+        Intent intent = new Intent(getApplication(),MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),0,intent,PendingIntent.FLAG_CANCEL_CURRENT);
         if (Build.VERSION.SDK_INT < 16) {
+
             not = new Notification.Builder(this)
-                    .setContentTitle("Title").setContentText("Text")
+                    .setContentIntent(pendingIntent)
+                    .setContentTitle("Playing")
+                    .setContentText(songTitle)
                     .setTicker(songTitle)
                     .setOngoing(true)
-                    .setContentTitle("Playing")
                     .setSmallIcon(R.mipmap.ic_play).getNotification();
             startForeground(NOTIFY_ID, not);
         } else {
             builder.setContentIntent(pendInt)
+                    .setContentIntent(pendingIntent)
                     .setSmallIcon(R.mipmap.ic_play)
                     .setTicker(songTitle)
                     .setOngoing(true)
@@ -171,9 +177,6 @@ public class MusicService extends Service implements
             not = builder.build();
             startForeground(NOTIFY_ID, not);
         }
-
-
-
     }
 
     //playback methods

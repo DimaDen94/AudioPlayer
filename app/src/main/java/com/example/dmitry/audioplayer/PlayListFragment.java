@@ -5,11 +5,11 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
@@ -17,7 +17,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SeekBar;
@@ -33,8 +32,6 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     private ImageButton buttonPlayStop;
     private ImageButton buttonNext;
     private ImageButton buttonPrevious;
-
-
 
     private SeekBar seekBar;
 
@@ -85,8 +82,6 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         //intent
         Tasc tasc = new Tasc();
         tasc.execute();
-
-
         initViews();
 
         //retrieve list view
@@ -103,8 +98,6 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         //create and set adapter
         SongAdapter songAdt = new SongAdapter(context, songList);
         playList.setAdapter(songAdt);
-
-
     }
     private class Tasc extends AsyncTask<Void,Void,Void>{
 
@@ -145,7 +138,6 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         buttonNext.setOnClickListener(this);
         buttonPrevious.setOnClickListener(this);
 
-
         //TV
         tvTitle = (TextView) getActivity().findViewById(R.id.tvSongTitle);
         tvArtist = (TextView) getActivity().findViewById(R.id.tvArtist);
@@ -163,13 +155,11 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         });
     }
 
-
     public void songPicked(View view) {
         musicService.setSong(Integer.parseInt(view.getTag().toString()));
         musicService.playSong();
 
     }
-
 
     private void seekChange(View v) {
        // if (mediaPlayer.isPlaying()) {
@@ -179,7 +169,6 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     }
 
     public void playAndStop() {
-
         if (i == 1) {
             try {
 
@@ -208,7 +197,6 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         } else {
             musicService.pausePlayer();
             i = 1;
-
         }
     }
 
@@ -236,12 +224,21 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-
     public void getSongList() {
+
+        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
+        final String[] projection = new String[] {
+                MediaStore.Audio.Media.DISPLAY_NAME,
+                MediaStore.Audio.Media.ARTIST,
+                MediaStore.Audio.Media.DATA};
+        final String sortOrder = MediaStore.Audio.AudioColumns.TITLE
+                + " COLLATE LOCALIZED ASC";
+
         //query external audio
         ContentResolver musicResolver = getActivity().getContentResolver();
         Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
+
+        Cursor musicCursor = musicResolver.query(musicUri, null, selection, null, sortOrder);
         //iterate over results if valid
         if (musicCursor != null && musicCursor.moveToFirst()) {
             //get columns
@@ -261,6 +258,4 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
             while (musicCursor.moveToNext());
         }
     }
-
-
 }
