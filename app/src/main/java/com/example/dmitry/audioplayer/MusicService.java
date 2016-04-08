@@ -1,5 +1,8 @@
 package com.example.dmitry.audioplayer;
 
+import java.util.ArrayList;
+import java.util.Random;
+
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -9,15 +12,16 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.Random;
-
-/**
- * Created by Dmitry on 07.04.2016.
+/*
+ * This is demo code to accompany the Mobiletuts+ series:
+ * Android SDK: Creating a Music Player
+ *
+ * Sue Smith - February 2014
  */
 
 public class MusicService extends Service implements
@@ -107,11 +111,13 @@ public class MusicService extends Service implements
         //set the data source
         try{
             player.setDataSource(getApplicationContext(), trackUri);
+            player.prepareAsync();
         }
         catch(Exception e){
             Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
-        player.prepareAsync();
+
+
     }
 
     //set the song
@@ -146,15 +152,28 @@ public class MusicService extends Service implements
                 notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification.Builder builder = new Notification.Builder(this);
+        Notification not;
+        if (Build.VERSION.SDK_INT < 16) {
+            not = new Notification.Builder(this)
+                    .setContentTitle("Title").setContentText("Text")
+                    .setTicker(songTitle)
+                    .setOngoing(true)
+                    .setContentTitle("Playing")
+                    .setSmallIcon(R.mipmap.ic_play).getNotification();
+            startForeground(NOTIFY_ID, not);
+        } else {
+            builder.setContentIntent(pendInt)
+                    .setSmallIcon(R.mipmap.ic_play)
+                    .setTicker(songTitle)
+                    .setOngoing(true)
+                    .setContentTitle("Playing")
+                    .setContentText(songTitle);
+            not = builder.build();
+            startForeground(NOTIFY_ID, not);
+        }
 
-        builder.setContentIntent(pendInt)
-                .setSmallIcon(R.mipmap.ic_play)
-                .setTicker(songTitle)
-                .setOngoing(true)
-                .setContentTitle("Playing")
-                .setContentText(songTitle);
-        Notification not = builder.build();
-        startForeground(NOTIFY_ID, not);
+
+
     }
 
     //playback methods

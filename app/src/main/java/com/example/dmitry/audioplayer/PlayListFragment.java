@@ -1,5 +1,5 @@
 package com.example.dmitry.audioplayer;
-
+import com.example.dmitry.audioplayer.MusicService.MusicBinder;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -7,6 +7,7 @@ import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
@@ -28,18 +29,29 @@ import java.util.Comparator;
 
 
 public class PlayListFragment extends Fragment implements View.OnClickListener {
+    //btn
     private ImageButton buttonPlayStop;
-    private MediaPlayer mediaPlayer;
+    private ImageButton buttonNext;
+    private ImageButton buttonPrevious;
+
+
+
     private SeekBar seekBar;
+
     private final Handler handler = new Handler();
+
     int i = 1;
+
     private TextView tvTitle;
     private TextView tvArtist;
     private TextView tvAlbum;
+
     private ArrayList<Song> songList;
     private ListView playList;
+
     private MusicService musicService;
     private Intent playIntent;
+
     private boolean musicBound = false;
 
 
@@ -71,11 +83,8 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     public void onStart() {
         super.onStart();
         //intent
-        if (playIntent == null) {
-            playIntent = new Intent(context, MusicService.class);
-            getActivity().bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-            getActivity().startService(playIntent);
-        }
+        Tasc tasc = new Tasc();
+        tasc.execute();
 
 
         initViews();
@@ -97,12 +106,23 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
 
 
     }
-
-    private ServiceConnection musicConnection = new ServiceConnection() {
+    private class Tasc extends AsyncTask<Void,Void,Void>{
 
         @Override
+        protected Void doInBackground(Void... params) {
+            if (playIntent == null) {
+                playIntent = new Intent(context, MusicService.class);
+                getActivity().bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+                getActivity().startService(playIntent);
+            }
+            return null;
+        }
+    }
+
+    private ServiceConnection musicConnection = new ServiceConnection() {
+        @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
+            MusicBinder binder = (MusicBinder) service;
             //get service
             musicService = binder.getService();
             //pass list
@@ -116,15 +136,24 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     };
 
     private void initViews() {
+        //buttons
+        buttonPlayStop = (ImageButton) getActivity().findViewById(R.id.btn_play_and_pause);
+        buttonNext = (ImageButton) getActivity().findViewById(R.id.btn_next);
+        buttonPrevious = (ImageButton) getActivity().findViewById(R.id.btn_previous);
+
+        buttonPlayStop.setOnClickListener(this);
+        buttonNext.setOnClickListener(this);
+        buttonPrevious.setOnClickListener(this);
+
+
+        //TV
         tvTitle = (TextView) getActivity().findViewById(R.id.tvSongTitle);
         tvArtist = (TextView) getActivity().findViewById(R.id.tvArtist);
         tvAlbum = (TextView) getActivity().findViewById(R.id.tvAlbum);
-        buttonPlayStop = (ImageButton) getActivity().findViewById(R.id.btn_play_and_pause);
-        buttonPlayStop.setOnClickListener(this);
-        mediaPlayer = MediaPlayer.create(context, R.raw.test_song);
+
+        //play list and seek bar
         playList = (ListView) getActivity().findViewById(R.id.audioList);
         seekBar = (SeekBar) getActivity().findViewById(R.id.seekBar);
-
         seekBar.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -143,16 +172,17 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
 
 
     private void seekChange(View v) {
-        if (mediaPlayer.isPlaying()) {
-            SeekBar sb = (SeekBar) v;
-            mediaPlayer.seekTo(sb.getProgress());
-        }
+       // if (mediaPlayer.isPlaying()) {
+       //     SeekBar sb = (SeekBar) v;
+       //     mediaPlayer.seekTo(sb.getProgress());
+       // }
     }
 
     public void playAndStop() {
 
         if (i == 1) {
             try {
+
                 musicService.go();
                 startPlayProgressUpdater();
             } catch (IllegalStateException e) {
