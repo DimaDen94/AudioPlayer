@@ -1,10 +1,14 @@
 package com.example.dmitry.audioplayer;
 
+import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
@@ -34,7 +38,9 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     private TextView tvAlbum;
     private ArrayList<Song> songList;
     private ListView playList;
-
+    private MusicService musicService;
+    private Intent playIntent;
+    private boolean musicBound = false;
 
 
     public void setContext(Context context) {
@@ -51,6 +57,7 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         fragment.setContext(context);
         return fragment;
     }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -63,7 +70,16 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onStart() {
         super.onStart();
+        //intent
+        if (playIntent == null) {
+            playIntent = new Intent(context, MusicService.class);
+            getActivity().bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            getActivity().startService(playIntent);
+        }
+
+
         initViews();
+
         //retrieve list view
         //instantiate list
         songList = new ArrayList<Song>();
@@ -79,10 +95,25 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         SongAdapter songAdt = new SongAdapter(context, songList);
         playList.setAdapter(songAdt);
 
-        //setup controller
 
     }
 
+    private ServiceConnection musicConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
+            //get service
+            musicService = binder.getService();
+            //pass list
+            musicService.setList(songList);
+            musicBound = true;
+        }
+
+        public void onServiceDisconnected(ComponentName name) {
+            musicBound = false;
+        }
+    };
 
     private void initViews() {
         tvTitle = (TextView) getActivity().findViewById(R.id.tvSongTitle);
@@ -91,8 +122,7 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         buttonPlayStop = (ImageButton) getActivity().findViewById(R.id.btn_play_and_pause);
         buttonPlayStop.setOnClickListener(this);
         mediaPlayer = MediaPlayer.create(context, R.raw.test_song);
-        playList= (ListView) getActivity().findViewById(R.id.audioList);
-
+        playList = (ListView) getActivity().findViewById(R.id.audioList);
         seekBar = (SeekBar) getActivity().findViewById(R.id.seekBar);
 
         seekBar.setOnTouchListener(new View.OnTouchListener() {
@@ -103,42 +133,52 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
             }
         });
     }
-    private void seekChange(View v){
-        if(mediaPlayer.isPlaying()){
-            SeekBar sb = (SeekBar)v;
+
+
+    public void songPicked(View view) {
+        musicService.setSong(Integer.parseInt(view.getTag().toString()));
+        musicService.playSong();
+
+    }
+
+
+    private void seekChange(View v) {
+        if (mediaPlayer.isPlaying()) {
+            SeekBar sb = (SeekBar) v;
             mediaPlayer.seekTo(sb.getProgress());
         }
     }
-    public void playAndStop(){
-        tvTitle.setText("");
-        if (i ==1) {
-            try{
-                mediaPlayer.start();
+
+    public void playAndStop() {
+
+        if (i == 1) {
+            try {
+                musicService.go();
                 startPlayProgressUpdater();
-            }catch (IllegalStateException e) {
-                mediaPlayer.pause();
+            } catch (IllegalStateException e) {
+                musicService.pausePlayer();
             }
             i = 0;
-        }else {
-            mediaPlayer.pause();
+        } else {
+            musicService.pausePlayer();
             i = 1;
         }
     }
 
     private void startPlayProgressUpdater() {
-        seekBar.setProgress(mediaPlayer.getCurrentPosition());
+        seekBar.setProgress(musicService.getPosn());
 
-        if (mediaPlayer.isPlaying()) {
+        if (musicService.isPng()) {
             Runnable notification = new Runnable() {
                 public void run() {
                     startPlayProgressUpdater();
                 }
             };
-            handler.postDelayed(notification,1000);
-        }else{
-            mediaPlayer.pause();
-            i =1;
-            seekBar.setProgress(0);
+            handler.postDelayed(notification, 1000);
+        } else {
+            musicService.pausePlayer();
+            i = 1;
+
         }
     }
 
@@ -149,19 +189,31 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        seekBar.setMax(mediaPlayer.getDuration());
-        playAndStop();
+        //seekBar.setMax(mediaPlayer.getDuration());
+        switch (v.getId())
+        {
+            case R.id.btn_play_and_pause:
+                playAndStop();
+                break;
+            case R.id.btn_next:
+                musicService.playNext();
+                break;
+            case R.id.btn_previous:
+                musicService.playPrev();
+                break;
+            case R.id.btn_stop:
+                break;
+        }
     }
 
 
-
-    public void getSongList(){
+    public void getSongList() {
         //query external audio
         ContentResolver musicResolver = getActivity().getContentResolver();
         Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
         //iterate over results if valid
-        if(musicCursor!=null && musicCursor.moveToFirst()){
+        if (musicCursor != null && musicCursor.moveToFirst()) {
             //get columns
             int titleColumn = musicCursor.getColumnIndex
                     (android.provider.MediaStore.Audio.Media.TITLE);

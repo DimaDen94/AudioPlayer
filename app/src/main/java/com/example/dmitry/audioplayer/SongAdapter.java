@@ -9,6 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Dmitry on 08.04.2016.
@@ -16,7 +17,8 @@ import java.util.ArrayList;
 public class SongAdapter extends BaseAdapter {
 
     //song list and layout
-    private ArrayList<Song> songs;
+    private List<Song> songs;
+
     private LayoutInflater songInf;
 
     //constructor
@@ -57,5 +59,6 @@ public class SongAdapter extends BaseAdapter {
         songLay.setTag(position);
         return songLay;
     }
+
 
 }
