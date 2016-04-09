@@ -1,5 +1,6 @@
 package com.example.dmitry.audioplayer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -11,6 +12,7 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
@@ -37,13 +39,28 @@ public class MusicService extends Service implements
     //binder
     private final IBinder musicBind = new MusicBinder();
     //title of current song
-    private String songTitle="";
+    private String title;
+    private String artist;
+    private String album;
     //notification
     Notification not;
     private static final int NOTIFY_ID=1;
     //shuffle flag and random
     private boolean shuffle=false;
     private Random rand;
+
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public String getAlbum() {
+        return album;
+    }
 
     public void onCreate(){
         //create the service
@@ -101,8 +118,8 @@ public class MusicService extends Service implements
         player.reset();
         //get song
         Song playSong = songs.get(songPosn);
-        //get title
-        songTitle=playSong.getTitle();
+        //get title, artist and album
+        String data = playSong.getData();
         //get id
         long currSong = playSong.getID();
         //set uri
@@ -110,17 +127,29 @@ public class MusicService extends Service implements
                 android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 currSong);
         //set the data source
-        try{
-            player.setDataSource(getApplicationContext(), trackUri);
+        try {
+            player.setDataSource(data);
+            //player.setDataSource(getApplicationContext(), trackUri);
             player.prepareAsync();
-        }
-        catch(Exception e){
-            Log.e("MUSIC SERVICE", "Error setting data source", e);
+
+            title = playSong.getTitle();
+            artist = playSong.getArtist();
+            album = playSong.getAlbum();
+        } catch (IOException e) {
             songPosn++;
             playSong();
+            e.printStackTrace();
+        }
+
+    }
+    private class Tasc extends AsyncTask<Uri, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Uri... params) {
+
+            return null;
         }
     }
-
     //set the song
     public void setSong(int songIndex){
         songPosn=songIndex;
@@ -161,8 +190,8 @@ public class MusicService extends Service implements
             not = new Notification.Builder(this)
                     .setContentIntent(pendingIntent)
                     .setContentTitle("Playing")
-                    .setContentText(songTitle)
-                    .setTicker(songTitle)
+                    .setContentText(title)
+                    .setTicker(title)
                     .setOngoing(true)
                     .setSmallIcon(R.mipmap.ic_play).getNotification();
             startForeground(NOTIFY_ID, not);
@@ -170,10 +199,10 @@ public class MusicService extends Service implements
             builder.setContentIntent(pendInt)
                     .setContentIntent(pendingIntent)
                     .setSmallIcon(R.mipmap.ic_play)
-                    .setTicker(songTitle)
+                    .setTicker(title)
                     .setOngoing(true)
                     .setContentTitle("Playing")
-                    .setContentText(songTitle);
+                    .setContentText(title);
             not = builder.build();
             startForeground(NOTIFY_ID, not);
         }
@@ -226,6 +255,7 @@ public class MusicService extends Service implements
         }
         playSong();
     }
+
 
     @Override
     public void onDestroy() {
