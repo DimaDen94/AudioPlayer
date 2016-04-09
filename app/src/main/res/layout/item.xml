@@ -3,7 +3,9 @@
     android:orientation="horizontal" android:layout_width="match_parent"
     android:layout_height="70dp">
 
-    <ImageButton
+    <ImageView
+        android:focusable="false"
+        android:focusableInTouchMode="false"
         android:layout_width="70dp"
         android:layout_height="70dp"
         android:id="@+id/imageButton"

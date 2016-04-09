@@ -16,10 +16,12 @@ import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SeekBar;
@@ -104,6 +106,16 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         SongAdapter songAdt = new SongAdapter(context, songList);
         playList.setAdapter(songAdt);
 
+
+
+        playList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                musicService.setSong(position);
+                startPlayProgressUpdater();
+            }
+        });
+
     }
 
     private class Tasc extends AsyncTask<Void, Void, Void> {
@@ -150,6 +162,19 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
 
         //play list and seek bar
         playList = (ListView) getActivity().findViewById(R.id.audioList);
+
+        playList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.e("myLogs", "click");
+                musicService.setSong(position);
+                musicService.playSong();
+            }
+        });
+
+
+
+
         seekBar = (SeekBar) getActivity().findViewById(R.id.seekBar);
         seekBar.setOnTouchListener(new View.OnTouchListener() {
             @Override
