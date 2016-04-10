@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.MediaStore;
@@ -27,9 +26,11 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 
 
 public class PlayListFragment extends Fragment implements View.OnClickListener {
@@ -37,17 +38,21 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     private ImageButton buttonPlayStop;
     private ImageButton buttonNext;
     private ImageButton buttonPrevious;
+    //create format
+    SimpleDateFormat format = new SimpleDateFormat("mm:ss");
+
+    //is working progress update
+    private boolean isProgress =  false;
 
     private SeekBar seekBar;
 
     private final Handler handler = new Handler();
 
-    private boolean isPlay = false;
-    int i = 1;
-
     private TextView tvTitle;
     private TextView tvArtist;
     private TextView tvAlbum;
+    private TextView tvRunningTime;
+    private TextView tvTotalTime;
 
     private ArrayList<Song> songList;
     private ListView playList;
@@ -56,7 +61,6 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     private Intent playIntent;
 
     private boolean musicBound = false;
-    public final static String BROADCAST_ACTION = "ru.startandroid.develop.p0961servicebackbroadcast";
     BroadcastReceiver receiver;
 
     public void setContext(Context context) {
@@ -106,27 +110,16 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         SongAdapter songAdt = new SongAdapter(context, songList);
         playList.setAdapter(songAdt);
 
-
-
         playList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 musicService.setSong(position);
-                startPlayProgressUpdater();
+                if(!isProgress)
+                    startPlayProgressUpdater();
             }
         });
 
     }
-
-    private class Tasc extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Void... params) {
-
-            return null;
-        }
-    }
-
 
     private ServiceConnection musicConnection = new ServiceConnection() {
         @Override
@@ -159,6 +152,8 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         tvTitle = (TextView) getActivity().findViewById(R.id.tvSongTitle);
         tvArtist = (TextView) getActivity().findViewById(R.id.tvArtist);
         tvAlbum = (TextView) getActivity().findViewById(R.id.tvAlbum);
+        tvRunningTime = (TextView) getActivity().findViewById(R.id.tvTimePlayed);
+        tvTotalTime = (TextView) getActivity().findViewById(R.id.tvTotalRunningTime);
 
         //play list and seek bar
         playList = (ListView) getActivity().findViewById(R.id.audioList);
@@ -185,17 +180,12 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         });
     }
 
-    public void songPicked(View view) {
-        musicService.setSong(Integer.parseInt(view.getTag().toString()));
-        musicService.playSong();
-
-    }
-
     private void seekChange(View v) {
         if (musicService.isPng()) {
             SeekBar sb = (SeekBar) v;
             musicService.seek(sb.getProgress());
-            startPlayProgressUpdater();
+            if(!isProgress)
+                startPlayProgressUpdater();
         }
     }
 
@@ -212,9 +202,24 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     }
 
     private void startPlayProgressUpdater() {
+
+        //if started
+        isProgress = true;
+
+        //get time
+        int pos = musicService.getPosn();
+        int dur = musicService.getDur();
+        Date datePos = new Date(pos);
+        Date dateDur = new Date(dur);
+
+        //update time
+        tvRunningTime.setText(String.valueOf(format.format(datePos)));
+        tvTotalTime.setText(String.valueOf(format.format(dateDur)));
+
+
         //update seek bar
-        seekBar.setMax(musicService.getDur());
-        seekBar.setProgress(musicService.getPosn());
+        seekBar.setProgress(pos);
+        seekBar.setMax(dur);
 
         //update tv
         tvTitle.setText(musicService.getTitle());
@@ -226,13 +231,8 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
                 startPlayProgressUpdater();
             }
         };
-        handler.postDelayed(notification, 1000);
+        handler.postDelayed(notification, 950);
 
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
     }
 
     @Override
@@ -250,16 +250,8 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
             case R.id.btn_stop:
                 break;
         }
-
-        startPlayProgressUpdater();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        //if(isPlay){
-        //    startPlayProgressUpdater();
-        //}
+        if(!isProgress)
+            startPlayProgressUpdater();
     }
 
     public void getSongList() {
