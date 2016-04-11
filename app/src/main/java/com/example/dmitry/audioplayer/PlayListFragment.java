@@ -70,7 +70,6 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     private Context context;
 
     public static PlayListFragment newInstance(Context context) {
-
         Bundle args = new Bundle();
         PlayListFragment fragment = new PlayListFragment();
         fragment.setArguments(args);
