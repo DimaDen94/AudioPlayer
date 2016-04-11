@@ -1,21 +1,17 @@
 package com.example.dmitry.audioplayer;
 
 import com.example.dmitry.audioplayer.MusicService.MusicBinder;
+import com.example.dmitry.audioplayer.model.MusicProvider;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
-import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -28,8 +24,6 @@ import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 
 
@@ -42,7 +36,7 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     SimpleDateFormat format = new SimpleDateFormat("mm:ss");
 
     //is working progress update
-    private boolean isProgress =  false;
+    private boolean isProgress = false;
 
     private SeekBar seekBar;
 
@@ -54,13 +48,15 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     private TextView tvRunningTime;
     private TextView tvTotalTime;
 
-    private ArrayList<Song> songList;
+    private ArrayList<Song> songsList;
+    private ArrayList<Song> newSongsList;
     private ListView playList;
+
 
     private MusicService musicService;
     private Intent playIntent;
 
-    private boolean musicBound = false;
+    private boolean isListSet = false;
     BroadcastReceiver receiver;
 
     public void setContext(Context context) {
@@ -68,6 +64,7 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     }
 
     private Context context;
+    MusicProvider provider;
 
     public static PlayListFragment newInstance(Context context) {
         Bundle args = new Bundle();
@@ -94,48 +91,9 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
             getActivity().startService(playIntent);
         }
         initViews();
-        //retrieve list view
-        //instantiate list
-        songList = new ArrayList<Song>();
-        //get songs from device
-        getSongList();
-        //sort alphabetically by title
-        Collections.sort(songList, new Comparator<Song>() {
-            public int compare(Song a, Song b) {
-                return a.getTitle().compareTo(b.getTitle());
-            }
-        });
-        //create and set adapter
-        SongAdapter songAdt = new SongAdapter(context, songList);
-        playList.setAdapter(songAdt);
-
-        playList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                musicService.setSong(position);
-                if(!isProgress)
-                    startPlayProgressUpdater();
-            }
-        });
-
+        initList();
+        initHandlers();
     }
-
-    private ServiceConnection musicConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            MusicBinder binder = (MusicBinder) service;
-            //get service
-            musicService = binder.getService();
-            //pass list
-            musicService.setList(songList);
-
-            musicBound = true;
-        }
-
-        public void onServiceDisconnected(ComponentName name) {
-            musicBound = false;
-        }
-    };
 
     private void initViews() {
         //buttons
@@ -157,35 +115,67 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         //play list and seek bar
         playList = (ListView) getActivity().findViewById(R.id.audioList);
 
+
+        seekBar = (SeekBar) getActivity().findViewById(R.id.seekBar);
+
+    }
+
+    private void initHandlers() {
         playList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.e("myLogs", "click");
+                musicService.setList(songsList);
                 musicService.setSong(position);
-                musicService.playSong();
+                if (!isProgress) {
+                    startPlayProgressUpdater();
+                }
             }
         });
-
-
-
-
-        seekBar = (SeekBar) getActivity().findViewById(R.id.seekBar);
         seekBar.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                seekChange(v);
+                if (musicService.isPng()) {
+                    SeekBar sb = (SeekBar) v;
+                    musicService.seek(sb.getProgress());
+                    if (!isProgress)
+                        startPlayProgressUpdater();
+                }
                 return false;
             }
         });
     }
 
-    private void seekChange(View v) {
-        if (musicService.isPng()) {
-            SeekBar sb = (SeekBar) v;
-            musicService.seek(sb.getProgress());
-            if(!isProgress)
-                startPlayProgressUpdater();
+    private void initList() {
+        //instantiate list
+        provider = new MusicProvider(context);
+        songsList = provider.getSongsSortedByTitle();
+        //create and set adapter
+        SongAdapter songAdt = new SongAdapter(context, songsList);
+        playList.setAdapter(songAdt);
+    }
+
+    private ServiceConnection musicConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicBinder binder = (MusicBinder) service;
+            //get service
+            musicService = binder.getService();
+            //pass list
+            if(!isListSet) {
+                musicService.setList(songsList);
+                isListSet = true;
+            }
         }
+
+        public void onServiceDisconnected(ComponentName name) {
+            isListSet = false;
+        }
+    };
+
+    public void setDataToAdapter(ArrayList<Song> data) {
+        SongAdapter songAdt = new SongAdapter(context, data);
+        playList.setAdapter(songAdt);
+        songsList = data;
     }
 
     public void playAndStop() {
@@ -249,51 +239,14 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
             case R.id.btn_stop:
                 break;
         }
-        if(!isProgress)
+        if (!isProgress)
             startPlayProgressUpdater();
-    }
-
-    public void getSongList() {
-
-        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
-        final String sortOrder = MediaStore.Audio.AudioColumns.TITLE
-                + " COLLATE LOCALIZED ASC";
-
-        //query external audio
-        ContentResolver musicResolver = getActivity().getContentResolver();
-        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-
-        Cursor musicCursor = musicResolver.query(musicUri, null, selection, null, sortOrder);
-        //iterate over results if valid
-        if (musicCursor != null && musicCursor.moveToFirst()) {
-            //get columns
-            int titleColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.TITLE);
-            int idColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media._ID);
-            int artistColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.ARTIST);
-            int albumColumn = musicCursor.getColumnIndex
-                    (MediaStore.Audio.Media.ALBUM);
-            int dataColumn = musicCursor.getColumnIndex
-                    (MediaStore.Audio.Media.DATA);
-            //add songs to list
-            do {
-                long thisId = musicCursor.getLong(idColumn);
-                String thisTitle = musicCursor.getString(titleColumn);
-                String thisArtist = musicCursor.getString(artistColumn);
-                String thisAlbum = musicCursor.getString(albumColumn);
-                String thisData = musicCursor.getString(dataColumn);
-                songList.add(new Song(thisId, thisTitle, thisArtist,thisAlbum,thisData));
-            }
-            while (musicCursor.moveToNext());
-        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        getActivity().unregisterReceiver(receiver);
         getActivity().stopService(playIntent);
+        getActivity().unregisterReceiver(receiver);
     }
 }

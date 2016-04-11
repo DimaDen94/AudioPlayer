@@ -16,6 +16,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.dmitry.audioplayer.model.MusicProvider;
+
+import java.security.Provider;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -23,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private AlertDialog alertDialog;
     PlayListFragment fragmen;
+    MusicProvider provider;
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -70,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void createDialog(){
         final String[] sort ={"Title", "Artist", "Album","Running time"};
-
+        provider = new MusicProvider(this);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
         //builder.setMessage("Sort by");
@@ -79,18 +83,17 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case 0:
-
+                        fragmen.setDataToAdapter(provider.getSongsSortedByTitle());
                         break;
                     case 1:
-
+                        fragmen.setDataToAdapter(provider.getSongsSortedByArtist());
                         break;
                     case 2:
-
+                        fragmen.setDataToAdapter(provider.getSongsSortedByAlbum());
                         break;
                     case 3:
-
+                        fragmen.setDataToAdapter(provider.getSongsSortedByDuration());
                         break;
-
                 }
             }
         });

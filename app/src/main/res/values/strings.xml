@@ -24,5 +24,5 @@
     <string name="text_btn_play">btn_play</string>
     <string name="tv_song_title_item">Soung title</string>
     <string name="tv_artist_item">Artist</string>
-    <string name="tv_album_item">Running time</string>
+    <string name="tv_duration_item">Running time</string>
 </resources>
