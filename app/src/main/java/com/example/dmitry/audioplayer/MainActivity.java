@@ -13,6 +13,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -22,15 +23,17 @@ import android.view.ViewGroup;
 
 import com.example.dmitry.audioplayer.model.MusicProvider;
 
-import java.security.Provider;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener{
     private TabLayout tabLayout;
     private Toolbar toolbar;
     private AlertDialog alertDialog;
-    PlayListFragment fragmen;
-    MusicProvider provider;
+    private PlayListFragment fragment;
+    private MusicProvider provider;
+    private SearchView mSearchView;
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -54,7 +57,15 @@ public class MainActivity extends AppCompatActivity {
         createDialog();
         initToolbar();
         initPagers();
-        fragmen  = PlayListFragment.newInstance(this);
+        fragment = PlayListFragment.newInstance(this);
+        setupSearchView();
+    }
+    private void setupSearchView()
+    {
+        mSearchView=(SearchView) findViewById(R.id.search);
+        mSearchView.setOnQueryTextListener(this);
+        mSearchView.setSubmitButtonEnabled(true);
+
     }
 
     private void initToolbar() {
@@ -87,16 +98,16 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case 0:
-                        fragmen.setDataToAdapter(provider.getSongsSortedByTitle());
+                        fragment.setDataToAdapter(provider.getSongsSortedByTitle());
                         break;
                     case 1:
-                        fragmen.setDataToAdapter(provider.getSongsSortedByArtist());
+                        fragment.setDataToAdapter(provider.getSongsSortedByArtist());
                         break;
                     case 2:
-                        fragmen.setDataToAdapter(provider.getSongsSortedByAlbum());
+                        fragment.setDataToAdapter(provider.getSongsSortedByAlbum());
                         break;
                     case 3:
-                        fragmen.setDataToAdapter(provider.getSongsSortedByDuration());
+                        fragment.setDataToAdapter(provider.getSongsSortedByDuration());
                         break;
                 }
             }
@@ -115,23 +126,23 @@ public class MainActivity extends AppCompatActivity {
         mViewPager.setAdapter(mSectionsPagerAdapter);
     }
 
+
+
+
+
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater menuInflater = getMenuInflater();
-        menuInflater.inflate(R.menu.menu, menu);
+    public boolean onQueryTextSubmit(String query) {
+        return false;
+    }
 
-        MenuItem searchItem = menu.findItem(R.id.search);
-
-        SearchManager searchManager = (SearchManager) MainActivity.this.getSystemService(Context.SEARCH_SERVICE);
-
-        SearchView searchView = null;
-        if (searchItem != null) {
-            searchView = (SearchView) searchItem.getActionView();
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        if (TextUtils.isEmpty(newText)) {
+            fragment.getPlayList().clearTextFilter();
+        } else {
+            fragment.getPlayList().setFilterText(newText);
         }
-        if (searchView != null) {
-            searchView.setSearchableInfo(searchManager.getSearchableInfo(MainActivity.this.getComponentName()));
-        }
-        return super.onCreateOptionsMenu(menu);
+        return true;
     }
 
     /**
@@ -151,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
             // Return a PlaceholderFragment (defined as a static inner class below).
             switch (position){
                 case 0:
-                    return fragmen;
+                    return fragment;
                 default:
                     return PlaceholderFragment.newInstance(position + 1);
             }

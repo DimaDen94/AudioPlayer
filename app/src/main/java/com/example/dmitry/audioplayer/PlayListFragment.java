@@ -49,9 +49,9 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     private TextView tvTotalTime;
 
     private ArrayList<Song> songsList;
-    private ArrayList<Song> newSongsList;
+    private ArrayList<Song> origSongs;
     private ListView playList;
-
+    private SongAdapter adapter;
 
     private MusicService musicService;
     private Intent playIntent;
@@ -125,7 +125,14 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 musicService.setList(songsList);
-                musicService.setSong(position);
+                Song song = (Song) parent.getAdapter().getItem(position);
+                ArrayList<Song> s = musicService.getSongs();
+                int tid = 0;
+                for (int i = 0; i < s.size(); i ++){
+                    if(s.get(i).getTime().equals(song.getTime()))
+                        tid = i;
+                }
+                musicService.setSong(tid);
                 if (!isProgress) {
                     startPlayProgressUpdater();
                 }
@@ -150,8 +157,13 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         provider = new MusicProvider(context);
         songsList = provider.getSongsSortedByTitle();
         //create and set adapter
-        SongAdapter songAdt = new SongAdapter(context, songsList);
-        playList.setAdapter(songAdt);
+        adapter = new SongAdapter(context, songsList);
+        playList.setAdapter(adapter);
+        playList.setTextFilterEnabled(true);
+        adapter.notifyDataSetChanged();
+    }
+    public ArrayList<Song> getOrigSongs() {
+        return adapter.getSongs();
     }
 
     private ServiceConnection musicConnection = new ServiceConnection() {
@@ -173,8 +185,8 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     };
 
     public void setDataToAdapter(ArrayList<Song> data) {
-        SongAdapter songAdt = new SongAdapter(context, data);
-        playList.setAdapter(songAdt);
+        adapter.setSongs(data);
+        playList.setAdapter(adapter);
         songsList = data;
     }
 
@@ -246,7 +258,9 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        getActivity().stopService(playIntent);
-        getActivity().unregisterReceiver(receiver);
+    }
+
+    public ListView getPlayList() {
+        return playList;
     }
 }

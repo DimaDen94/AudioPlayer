@@ -3,7 +3,7 @@
 
     <style name="AppDefault" parent="AppTheme">
         <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primaryDark</item>
+
         <item name="colorControlNormal">@color/color_dark</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>

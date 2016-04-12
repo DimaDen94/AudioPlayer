@@ -5,6 +5,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -14,12 +16,21 @@ import java.util.List;
 /**
  * Created by Dmitry on 08.04.2016.
  */
-public class SongAdapter extends BaseAdapter {
+public class SongAdapter extends BaseAdapter implements Filterable {
 
     //song list and layout
-    private List<Song> songs;
+    private ArrayList<Song> songs;
+    private ArrayList<Song> origSongs;
 
     private LayoutInflater songInf;
+
+    public ArrayList<Song> getSongs() {
+        return origSongs;
+    }
+
+    public void setSongs(ArrayList<Song> songs) {
+        this.songs = songs;
+    }
 
     //constructor
     public SongAdapter(Context c, ArrayList<Song> theSongs){
@@ -33,8 +44,8 @@ public class SongAdapter extends BaseAdapter {
     }
 
     @Override
-    public Object getItem(int arg0) {
-        return songs.get(arg0);
+    public Object getItem(int position) {
+        return songs.get(position);
     }
 
     @Override
@@ -63,4 +74,36 @@ public class SongAdapter extends BaseAdapter {
     }
 
 
+    @Override
+    public Filter getFilter() {
+        return new Filter() {
+
+            @Override
+            protected FilterResults performFiltering(CharSequence constraint) {
+                final FilterResults oReturn = new FilterResults();
+                final ArrayList<Song> results = new ArrayList<>();
+                if (origSongs == null)
+                    origSongs = songs;
+                if (constraint != null) {
+                    if (origSongs != null && origSongs.size() > 0) {
+                        for (final Song g : origSongs) {
+                            if (g.getTitle().toLowerCase()
+                                    .contains(constraint.toString()))
+                                results.add(g);
+                        }
+                    }
+                    oReturn.values = results;
+                }
+                return oReturn;
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            protected void publishResults(CharSequence constraint,
+                                          FilterResults results) {
+                songs = (ArrayList<Song>) results.values;
+                notifyDataSetChanged();
+            }
+        };
+    }
 }

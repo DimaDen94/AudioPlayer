@@ -49,6 +49,9 @@ public class MusicService extends Service implements
     private boolean shuffle = false;
     private Random rand;
 
+    public ArrayList<Song> getSongs() {
+        return songs;
+    }
 
     public String getTitle() {
         return title;
