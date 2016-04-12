@@ -98,15 +98,23 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case 0:
+                        onQueryTextChange("");
+                        mSearchView.clearFocus();
                         fragment.setDataToAdapter(provider.getSongsSortedByTitle());
                         break;
                     case 1:
+                        onQueryTextChange("");
+                        mSearchView.clearFocus();
                         fragment.setDataToAdapter(provider.getSongsSortedByArtist());
                         break;
                     case 2:
+                        onQueryTextChange("");
+                        mSearchView.clearFocus();
                         fragment.setDataToAdapter(provider.getSongsSortedByAlbum());
                         break;
                     case 3:
+                        onQueryTextChange("");
+                        mSearchView.clearFocus();
                         fragment.setDataToAdapter(provider.getSongsSortedByDuration());
                         break;
                 }
@@ -144,6 +152,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         }
         return true;
     }
+
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to

@@ -124,15 +124,13 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         playList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
                 musicService.setList(songsList);
-                Song song = (Song) parent.getAdapter().getItem(position);
-                ArrayList<Song> s = musicService.getSongs();
-                int tid = 0;
-                for (int i = 0; i < s.size(); i ++){
-                    if(s.get(i).getTime().equals(song.getTime()))
-                        tid = i;
-                }
-                musicService.setSong(tid);
+                ArrayList<Song> filteredSongs = adapter.getFilteredSongs();
+                if (filteredSongs!=null)
+                    musicService.setList(filteredSongs);
+
+                musicService.setSong(position);
                 if (!isProgress) {
                     startPlayProgressUpdater();
                 }
@@ -161,9 +159,6 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         playList.setAdapter(adapter);
         playList.setTextFilterEnabled(true);
         adapter.notifyDataSetChanged();
-    }
-    public ArrayList<Song> getOrigSongs() {
-        return adapter.getSongs();
     }
 
     private ServiceConnection musicConnection = new ServiceConnection() {

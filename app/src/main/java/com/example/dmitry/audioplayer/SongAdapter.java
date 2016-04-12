@@ -11,7 +11,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Dmitry on 08.04.2016.
@@ -21,11 +20,11 @@ public class SongAdapter extends BaseAdapter implements Filterable {
     //song list and layout
     private ArrayList<Song> songs;
     private ArrayList<Song> origSongs;
-
+    private ArrayList<Song> filteredSongs = null;
     private LayoutInflater songInf;
 
-    public ArrayList<Song> getSongs() {
-        return origSongs;
+    public ArrayList<Song> getFilteredSongs() {
+        return filteredSongs;
     }
 
     public void setSongs(ArrayList<Song> songs) {
@@ -87,12 +86,14 @@ public class SongAdapter extends BaseAdapter implements Filterable {
                 if (constraint != null) {
                     if (origSongs != null && origSongs.size() > 0) {
                         for (final Song g : origSongs) {
-                            if (g.getTitle().toLowerCase()
-                                    .contains(constraint.toString()))
+                            if (g.getTitle().toLowerCase().contains(constraint.toString())
+                                    || g.getAlbum().toLowerCase().contains(constraint.toString())
+                                    || g.getArtist().toLowerCase().contains(constraint.toString()))
                                 results.add(g);
                         }
                     }
                     oReturn.values = results;
+                    filteredSongs = results;
                 }
                 return oReturn;
             }
