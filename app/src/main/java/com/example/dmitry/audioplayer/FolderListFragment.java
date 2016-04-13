@@ -59,6 +59,7 @@ public class FolderListFragment extends Fragment {
         foldersView.setAdapter(new FoldersAdapter(context, new MusicProvider(context).getFolders()));
 
         foldersView.setNumColumns(GridView.AUTO_FIT);
+        foldersView.setColumnWidth(180);
         /*foldersView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
