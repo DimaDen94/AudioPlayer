@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * Created by Dmitry on 08.04.2016.
  */
-public class SongAdapter extends BaseAdapter implements Filterable {
+public class SongsAdapter extends BaseAdapter implements Filterable {
 
     //song list and layout
     private ArrayList<Song> songs;
@@ -32,7 +32,7 @@ public class SongAdapter extends BaseAdapter implements Filterable {
     }
 
     //constructor
-    public SongAdapter(Context c, ArrayList<Song> theSongs){
+    public SongsAdapter(Context c, ArrayList<Song> theSongs){
         songs=theSongs;
         songInf=LayoutInflater.from(c);
     }

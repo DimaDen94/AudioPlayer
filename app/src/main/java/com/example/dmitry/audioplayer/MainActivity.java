@@ -1,6 +1,5 @@
 package com.example.dmitry.audioplayer;
 
-import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -14,31 +13,26 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 
 import com.example.dmitry.audioplayer.model.MusicProvider;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener{
     private TabLayout tabLayout;
     private Toolbar toolbar;
     private AlertDialog alertDialog;
-    private PlayListFragment fragment;
+    private PlayListFragment playListFragment;
+    private FolderListFragment folderListFragment;
     private MusicProvider provider;
     private SearchView mSearchView;
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
      * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
+     * loaded playListFragment in memory. If this becomes too memory intensive, it
      * may be best to switch to a
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
@@ -57,14 +51,15 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         createDialog();
         initToolbar();
         initPagers();
-        fragment = PlayListFragment.newInstance(this);
+        playListFragment = PlayListFragment.newInstance(this);
+        folderListFragment = FolderListFragment.newInstance(this);
         setupSearchView();
     }
     private void setupSearchView()
     {
         mSearchView=(SearchView) findViewById(R.id.search);
         mSearchView.setOnQueryTextListener(this);
-        mSearchView.setSubmitButtonEnabled(true);
+        //mSearchView.setSubmitButtonEnabled(true);
 
     }
 
@@ -90,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private void createDialog(){
         final String[] sort ={"Title", "Artist", "Album","Running time"};
         provider = new MusicProvider(this);
+        provider.getFolders();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
         //builder.setMessage("Sort by");
@@ -100,22 +96,22 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                     case 0:
                         onQueryTextChange("");
                         mSearchView.clearFocus();
-                        fragment.setDataToAdapter(provider.getSongsSortedByTitle());
+                        playListFragment.setDataToAdapter(provider.getSongsSortedByTitle());
                         break;
                     case 1:
                         onQueryTextChange("");
                         mSearchView.clearFocus();
-                        fragment.setDataToAdapter(provider.getSongsSortedByArtist());
+                        playListFragment.setDataToAdapter(provider.getSongsSortedByArtist());
                         break;
                     case 2:
                         onQueryTextChange("");
                         mSearchView.clearFocus();
-                        fragment.setDataToAdapter(provider.getSongsSortedByAlbum());
+                        playListFragment.setDataToAdapter(provider.getSongsSortedByAlbum());
                         break;
                     case 3:
                         onQueryTextChange("");
                         mSearchView.clearFocus();
-                        fragment.setDataToAdapter(provider.getSongsSortedByDuration());
+                        playListFragment.setDataToAdapter(provider.getSongsSortedByDuration());
                         break;
                 }
             }
@@ -125,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
 
     private void initPagers(){
-        // Create the adapter that will return a fragment for each of the three
+        // Create the adapter that will return a playListFragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(),this);
 
@@ -146,16 +142,16 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     public boolean onQueryTextChange(String newText) {
         if (TextUtils.isEmpty(newText)) {
-            fragment.getPlayList().clearTextFilter();
+            playListFragment.getPlayList().clearTextFilter();
         } else {
-            fragment.getPlayList().setFilterText(newText);
+            playListFragment.getPlayList().setFilterText(newText);
         }
         return true;
     }
 
 
     /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * A {@link FragmentPagerAdapter} that returns a playListFragment corresponding to
      * one of the sections/tabs/pages.
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
@@ -167,13 +163,13 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
         @Override
         public Fragment getItem(int position) {
-            // getItem is called to instantiate the fragment for the given page.
+            // getItem is called to instantiate the playListFragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
             switch (position){
                 case 0:
-                    return fragment;
+                    return playListFragment;
                 default:
-                    return PlaceholderFragment.newInstance(position + 1);
+                    return folderListFragment;
             }
         }
 
@@ -195,38 +191,4 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             return null;
         }
     }
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            return rootView;
-        }
-    }
-
 }

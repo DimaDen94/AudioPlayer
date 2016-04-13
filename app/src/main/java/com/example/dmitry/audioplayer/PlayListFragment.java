@@ -3,7 +3,6 @@ package com.example.dmitry.audioplayer;
 import com.example.dmitry.audioplayer.MusicService.MusicBinder;
 import com.example.dmitry.audioplayer.model.MusicProvider;
 
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -51,13 +50,13 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
     private ArrayList<Song> songsList;
     private ArrayList<Song> origSongs;
     private ListView playList;
-    private SongAdapter adapter;
+    private SongsAdapter adapter;
 
     private MusicService musicService;
     private Intent playIntent;
 
     private boolean isListSet = false;
-    BroadcastReceiver receiver;
+    //BroadcastReceiver receiver;
 
     public void setContext(Context context) {
         this.context = context;
@@ -117,7 +116,6 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
 
 
         seekBar = (SeekBar) getActivity().findViewById(R.id.seekBar);
-
     }
 
     private void initHandlers() {
@@ -155,7 +153,7 @@ public class PlayListFragment extends Fragment implements View.OnClickListener {
         provider = new MusicProvider(context);
         songsList = provider.getSongsSortedByTitle();
         //create and set adapter
-        adapter = new SongAdapter(context, songsList);
+        adapter = new SongsAdapter(context, songsList);
         playList.setAdapter(adapter);
         playList.setTextFilterEnabled(true);
         adapter.notifyDataSetChanged();
