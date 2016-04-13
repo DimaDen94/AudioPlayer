@@ -26,4 +26,5 @@
     <string name="tv_artist_item">Artist</string>
     <string name="tv_duration_item">Running time</string>
     <string name="title_activity_search">SearchActivity</string>
+    <string name="title_activity_folders">FoldersActivity</string>
 </resources>

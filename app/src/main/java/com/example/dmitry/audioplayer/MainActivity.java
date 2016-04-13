@@ -1,59 +1,156 @@
 package com.example.dmitry.audioplayer;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.ViewPager;
+import android.os.Handler;
+import android.os.IBinder;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ImageButton;
+import android.widget.ListView;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.example.dmitry.audioplayer.model.MusicProvider;
 
-import java.util.Locale;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 
-public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener{
-    private TabLayout tabLayout;
+
+public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, View.OnClickListener{
     private Toolbar toolbar;
     private AlertDialog alertDialog;
-    private PlayListFragment playListFragment;
-    private FolderListFragment folderListFragment;
+
     private MusicProvider provider;
     private SearchView mSearchView;
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded playListFragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
-    SectionsPagerAdapter mSectionsPagerAdapter;
 
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
-    ViewPager mViewPager;
+
+    //btn
+    private ImageButton buttonPlayStop;
+    private ImageButton buttonNext;
+    private ImageButton buttonPrevious;
+    //create format
+    SimpleDateFormat format = new SimpleDateFormat("mm:ss");
+
+    //is working progress update
+    private boolean isProgress = false;
+
+    private SeekBar seekBar;
+
+    private final Handler handler = new Handler();
+
+    private TextView tvTitle;
+    private TextView tvArtist;
+    private TextView tvAlbum;
+    private TextView tvRunningTime;
+    private TextView tvTotalTime;
+
+    private ArrayList<Song> songsList;
+    private ListView playList;
+    private SongsAdapter adapter;
+
+    private MusicService musicService;
+    private Intent playIntent;
+
+    private boolean isListSet = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppDefault);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //intent
+        if (playIntent == null) {
+            playIntent = new Intent(this, MusicService.class);
+            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(playIntent);
+        }
+        initViews();
+        initList();
+        initHandlers();
+
+
         createDialog();
         initToolbar();
-        initPagers();
-        playListFragment = PlayListFragment.newInstance(this);
-        folderListFragment = FolderListFragment.newInstance(this);
         setupSearchView();
+    }
+
+    private void initViews() {
+        //buttons
+        buttonPlayStop = (ImageButton) findViewById(R.id.btn_play_and_pause);
+        buttonNext = (ImageButton) findViewById(R.id.btn_next);
+        buttonPrevious = (ImageButton) findViewById(R.id.btn_previous);
+
+        buttonPlayStop.setOnClickListener(this);
+        buttonNext.setOnClickListener(this);
+        buttonPrevious.setOnClickListener(this);
+
+        //TV
+        tvTitle = (TextView)findViewById(R.id.tvSongTitle);
+        tvArtist = (TextView) findViewById(R.id.tvArtist);
+        tvAlbum = (TextView) findViewById(R.id.tvAlbum);
+        tvRunningTime = (TextView) findViewById(R.id.tvTimePlayed);
+        tvTotalTime = (TextView) findViewById(R.id.tvTotalRunningTime);
+
+        //play list and seek bar
+        playList = (ListView) findViewById(R.id.audioList);
+        playList.setHorizontalScrollBarEnabled(true);
+
+        seekBar = (SeekBar) findViewById(R.id.seekBar);
+    }
+    private void initHandlers() {
+        playList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                musicService.setList(songsList);
+                ArrayList<Song> filteredSongs = adapter.getFilteredSongs();
+                if (filteredSongs!=null)
+                    musicService.setList(filteredSongs);
+
+                musicService.setSong(position);
+                if (!isProgress) {
+                    startPlayProgressUpdater();
+                }
+            }
+        });
+        seekBar.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (musicService.isPng()) {
+                    SeekBar sb = (SeekBar) v;
+                    musicService.seek(sb.getProgress());
+                    if (!isProgress)
+                        startPlayProgressUpdater();
+                }
+                return false;
+            }
+        });
+    }
+
+    private void initList() {
+        //instantiate list
+        provider = new MusicProvider(this);
+        songsList = provider.getSongsSortedByTitle();
+        //create and set adapter
+        adapter = new SongsAdapter(this, songsList);
+        playList.setAdapter(adapter);
+        playList.setTextFilterEnabled(true);
+        adapter.notifyDataSetChanged();
     }
     private void setupSearchView()
     {
@@ -62,7 +159,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         //mSearchView.setSubmitButtonEnabled(true);
 
     }
-
     private void initToolbar() {
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -82,6 +178,97 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             }
         });
     }
+    private ServiceConnection musicConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
+            //get service
+            musicService = binder.getService();
+            //pass list
+            if(!isListSet) {
+                musicService.setList(songsList);
+                isListSet = true;
+            }
+        }
+
+        public void onServiceDisconnected(ComponentName name) {
+            isListSet = false;
+        }
+    };
+
+    public void setDataToAdapter(ArrayList<Song> data) {
+        adapter.setSongs(data);
+        playList.setAdapter(adapter);
+        songsList = data;
+    }
+
+    public void playAndStop() {
+        if (!musicService.isPng()) {
+            try {
+                musicService.go();
+            } catch (IllegalStateException e) {
+                musicService.pausePlayer();
+            }
+        } else {
+            musicService.pausePlayer();
+        }
+    }
+
+    private void startPlayProgressUpdater() {
+
+        //if started
+        isProgress = true;
+
+        //get time
+        int pos = musicService.getPosn();
+        int dur = musicService.getDur();
+        Date datePos = new Date(pos);
+        Date dateDur = new Date(dur);
+
+        //update time
+        tvRunningTime.setText(String.valueOf(format.format(datePos)));
+        tvTotalTime.setText(String.valueOf(format.format(dateDur)));
+
+
+        //update seek bar
+        seekBar.setProgress(pos);
+        seekBar.setMax(dur);
+
+        //update tv
+        tvTitle.setText(musicService.getTitle());
+        tvArtist.setText(musicService.getArtist());
+        tvAlbum.setText(musicService.getAlbum());
+
+        Runnable notification = new Runnable() {
+            public void run() {
+                startPlayProgressUpdater();
+            }
+        };
+        handler.postDelayed(notification, 950);
+
+    }
+
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.btn_play_and_pause:
+                playAndStop();
+                break;
+            case R.id.btn_next:
+                musicService.playNext();
+                break;
+            case R.id.btn_previous:
+                musicService.playPrev();
+                break;
+            case R.id.btn_stop:
+                break;
+        }
+        if (!isProgress)
+            startPlayProgressUpdater();
+    }
+
+
     private void createDialog(){
         final String[] sort ={"Title", "Artist", "Album","Running time"};
         provider = new MusicProvider(this);
@@ -96,41 +283,28 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                     case 0:
                         onQueryTextChange("");
                         mSearchView.clearFocus();
-                        playListFragment.setDataToAdapter(provider.getSongsSortedByTitle());
+                        setDataToAdapter(provider.getSongsSortedByTitle());
                         break;
                     case 1:
                         onQueryTextChange("");
                         mSearchView.clearFocus();
-                        playListFragment.setDataToAdapter(provider.getSongsSortedByArtist());
+                        setDataToAdapter(provider.getSongsSortedByArtist());
                         break;
                     case 2:
                         onQueryTextChange("");
                         mSearchView.clearFocus();
-                        playListFragment.setDataToAdapter(provider.getSongsSortedByAlbum());
+                        setDataToAdapter(provider.getSongsSortedByAlbum());
                         break;
                     case 3:
                         onQueryTextChange("");
                         mSearchView.clearFocus();
-                        playListFragment.setDataToAdapter(provider.getSongsSortedByDuration());
+                        setDataToAdapter(provider.getSongsSortedByDuration());
                         break;
                 }
             }
         });
         alertDialog = builder.create();
     }
-
-
-    private void initPagers(){
-        // Create the adapter that will return a playListFragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(),this);
-
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.pager);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
-    }
-
-
 
 
 
@@ -142,53 +316,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     public boolean onQueryTextChange(String newText) {
         if (TextUtils.isEmpty(newText)) {
-            playListFragment.getPlayList().clearTextFilter();
+            playList.clearTextFilter();
         } else {
-            playListFragment.getPlayList().setFilterText(newText);
+            playList.setFilterText(newText);
         }
         return true;
-    }
-
-
-    /**
-     * A {@link FragmentPagerAdapter} that returns a playListFragment corresponding to
-     * one of the sections/tabs/pages.
-     */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
-        Context context;
-        public SectionsPagerAdapter(FragmentManager fm, Context context) {
-            super(fm);
-            this.context = context;
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            // getItem is called to instantiate the playListFragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
-            switch (position){
-                case 0:
-                    return playListFragment;
-                default:
-                    return folderListFragment;
-            }
-        }
-
-        @Override
-        public int getCount() {
-            // Show 2 total pages.
-            return 2;
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            Locale l = Locale.getDefault();
-            switch (position) {
-                case 0:
-                    return "List".toUpperCase(l);
-                case 1:
-                    return "browser".toUpperCase(l);
-            }
-            return null;
-        }
     }
 }
