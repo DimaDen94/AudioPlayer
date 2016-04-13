@@ -17,6 +17,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SeekBar;
@@ -35,7 +36,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     private MusicProvider provider;
     private SearchView mSearchView;
-
 
     //btn
     private ImageButton buttonPlayStop;
@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     private boolean isListSet = false;
 
+    private Button buttonChooseTheFolder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +100,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         buttonNext.setOnClickListener(this);
         buttonPrevious.setOnClickListener(this);
 
+        buttonChooseTheFolder = (Button) findViewById(R.id.btn_choose_the_folder);
+
         //TV
         tvTitle = (TextView)findViewById(R.id.tvSongTitle);
         tvArtist = (TextView) findViewById(R.id.tvArtist);
@@ -111,6 +114,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         playList.setHorizontalScrollBarEnabled(true);
 
         seekBar = (SeekBar) findViewById(R.id.seekBar);
+
+
     }
     private void initHandlers() {
         playList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -119,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
                 musicService.setList(songsList);
                 ArrayList<Song> filteredSongs = adapter.getFilteredSongs();
-                if (filteredSongs!=null)
+                if (filteredSongs != null)
                     musicService.setList(filteredSongs);
 
                 musicService.setSong(position);
@@ -138,6 +143,14 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                         startPlayProgressUpdater();
                 }
                 return false;
+            }
+        });
+
+        buttonChooseTheFolder.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, FoldersActivity.class);
+                startActivityForResult(intent, 1);
             }
         });
     }
@@ -164,12 +177,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.mipmap.ic_sort);
         toolbar.setTitle("My player");
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem menuItem) {
-                return false;
-            }
-        });
         toolbar.inflateMenu(R.menu.menu);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -197,6 +204,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     };
 
     public void setDataToAdapter(ArrayList<Song> data) {
+        onQueryTextChange("");
+        mSearchView.clearFocus();
         adapter.setSongs(data);
         playList.setAdapter(adapter);
         songsList = data;
@@ -249,6 +258,35 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
 
+    private void createDialog(){
+        final String[] sort ={"Title", "Artist", "Album","Running time"};
+        provider = new MusicProvider(this);
+        provider.getFolders();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setItems(sort, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        setDataToAdapter(provider.getSongsSortedByTitle());
+                        break;
+                    case 1:
+                        setDataToAdapter(provider.getSongsSortedByArtist());
+                        break;
+                    case 2:
+                        setDataToAdapter(provider.getSongsSortedByAlbum());
+                        break;
+                    case 3:
+                        setDataToAdapter(provider.getSongsSortedByDuration());
+                        break;
+                }
+            }
+        });
+        alertDialog = builder.create();
+    }
+
+
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -268,45 +306,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             startPlayProgressUpdater();
     }
 
-
-    private void createDialog(){
-        final String[] sort ={"Title", "Artist", "Album","Running time"};
-        provider = new MusicProvider(this);
-        provider.getFolders();
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setCancelable(true);
-        //builder.setMessage("Sort by");
-        builder.setItems(sort, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which) {
-                    case 0:
-                        onQueryTextChange("");
-                        mSearchView.clearFocus();
-                        setDataToAdapter(provider.getSongsSortedByTitle());
-                        break;
-                    case 1:
-                        onQueryTextChange("");
-                        mSearchView.clearFocus();
-                        setDataToAdapter(provider.getSongsSortedByArtist());
-                        break;
-                    case 2:
-                        onQueryTextChange("");
-                        mSearchView.clearFocus();
-                        setDataToAdapter(provider.getSongsSortedByAlbum());
-                        break;
-                    case 3:
-                        onQueryTextChange("");
-                        mSearchView.clearFocus();
-                        setDataToAdapter(provider.getSongsSortedByDuration());
-                        break;
-                }
-            }
-        });
-        alertDialog = builder.create();
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (data == null) {return;}
+        String folder = data.getStringExtra("folder");
+        setDataToAdapter(provider.getSongsSortedByTitle(folder));
     }
-
-
 
     @Override
     public boolean onQueryTextSubmit(String query) {
