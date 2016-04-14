@@ -139,9 +139,16 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
                 musicService.setList(songsList);
 
-                /*LinearLayout songLay = (LinearLayout) view;
+                for(int i = 0; i < songsList.size(); i ++){
+                    imgNoteOrPlay=(ImageView)parent.getChildAt(i).findViewById(R.id.img_note_play);
+                    imgNoteOrPlay.setImageResource(R.mipmap.ic_note);
+                }
+
+
+
+                LinearLayout songLay = (LinearLayout) view;
                 imgNoteOrPlay = (ImageView) songLay.findViewById(R.id.img_note_play);
-                imgNoteOrPlay.setImageResource(R.mipmap.ic_note);*/
+                imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
 
 
                 ArrayList<Song> filteredSongs = adapter.getFilteredSongs();

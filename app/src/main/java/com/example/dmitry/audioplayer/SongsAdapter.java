@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -60,12 +61,14 @@ public class SongsAdapter extends BaseAdapter implements Filterable {
         TextView songView = (TextView)songLay.findViewById(R.id.tv_item_title);
         TextView artistView = (TextView)songLay.findViewById(R.id.tv_item_artist);
         TextView durationView = (TextView)songLay.findViewById(R.id.tv_item_duration);
+        ImageView imageView = (ImageView) songLay.findViewById(R.id.img_note_play);
         //get song using position
         Song currSong = songs.get(position);
         //get title and artist strings
         songView.setText(currSong.getTitle());
         artistView.setText(currSong.getArtist());
         durationView.setText(currSong.getTime());
+        imageView.setImageResource(R.mipmap.ic_note);
         //set position as tag
         songLay.setTag(position);
         return songLay;
