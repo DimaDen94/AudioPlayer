@@ -11,5 +11,11 @@
         android:layout_centerHorizontal="true"
         android:layout_above="@+id/linearLayout"
         android:background="#a46900"
-        android:layout_alignParentTop="true" />
+        android:layout_alignParentTop="true"
+
+        android:drawSelectorOnTop="false"
+
+        android:listSelector="@android:color/darker_gray"
+
+        />
 </LinearLayout>

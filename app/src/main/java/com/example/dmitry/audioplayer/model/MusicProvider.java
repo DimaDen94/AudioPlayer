@@ -29,10 +29,8 @@ public class MusicProvider {
     }
 
     private void getSongList() {
-
+        songList.clear();
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
-        //final String sortOrder = MediaStore.Audio.AudioColumns.TITLE
-        //        + " COLLATE LOCALIZED ASC";
 
         //query external audio
         ContentResolver musicResolver = context.getContentResolver();
@@ -92,7 +90,55 @@ public class MusicProvider {
 
 
 
+    private void getSongList(String folder) {
+
+        songList.clear();
+
+        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0 AND " +
+                MediaStore.Audio.Media.DATA + " LIKE " + "'"+folder+ "/%'";
+
+
+        //query external audio
+        ContentResolver musicResolver = context.getContentResolver();
+        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+
+        Cursor musicCursor = musicResolver.query(musicUri, null, selection, null, null);
+        //iterate over results if valid
+        if (musicCursor != null && musicCursor.moveToFirst()) {
+            //get columns
+            int titleColumn = musicCursor.getColumnIndex
+                    (android.provider.MediaStore.Audio.Media.TITLE);
+            int artistColumn = musicCursor.getColumnIndex
+                    (android.provider.MediaStore.Audio.Media.ARTIST);
+            int albumColumn = musicCursor.getColumnIndex
+                    (MediaStore.Audio.Media.ALBUM);
+            int idColumn = musicCursor.getColumnIndex
+                    (MediaStore.Audio.Media.DURATION);
+            int dataColumn = musicCursor.getColumnIndex
+                    (MediaStore.Audio.Media.DATA);
+            //add songs to list
+            do {
+                String thisTitle = musicCursor.getString(titleColumn);
+                String thisArtist = musicCursor.getString(artistColumn);
+                String thisAlbum = musicCursor.getString(albumColumn);
+                long thisDuration= musicCursor.getLong(idColumn);
+                String thisData = musicCursor.getString(dataColumn);
+
+                //if true directory
+                File file = new File(thisData);
+                String directory = file.getParent();
+                if(directory.equals(folder))
+                    songList.add(new Song(thisDuration, thisTitle, thisArtist,thisAlbum,thisData));
+            }
+            while (musicCursor.moveToNext());
+        }
+    }
+
+
+
+
     public ArrayList<Song> getSongsSortedByTitle(){
+        getSongList();
         Collections.sort(songList, new Comparator<Song>() {
             public int compare(Song a, Song b) {
                 return a.getTitle().compareTo(b.getTitle());
@@ -101,6 +147,7 @@ public class MusicProvider {
         return songList;
     }
     public ArrayList<Song> getSongsSortedByArtist(){
+        getSongList();
         Collections.sort(songList, new Comparator<Song>() {
             public int compare(Song a, Song b) {
                 return a.getArtist().compareTo(b.getArtist());
@@ -109,6 +156,7 @@ public class MusicProvider {
         return songList;
     }
     public ArrayList<Song> getSongsSortedByAlbum(){
+        getSongList();
         Collections.sort(songList, new Comparator<Song>() {
             public int compare(Song a, Song b) {
                 return a.getAlbum().compareTo(b.getAlbum());
@@ -117,6 +165,7 @@ public class MusicProvider {
         return songList;
     }
     public ArrayList<Song> getSongsSortedByDuration(){
+        getSongList();
         Collections.sort(songList, new Comparator<Song>() {
             public int compare(Song a, Song b) {
                 if(a.getTimeInSecond() > b.getTimeInSecond()) {
@@ -180,45 +229,7 @@ public class MusicProvider {
     }
 
 
-    private void getSongList(String folder) {
 
-        songList.clear();
-        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0 AND " +
-                MediaStore.Audio.Media.DATA + " LIKE " + "'"+folder+ "/%'";
-        //final String sortOrder = MediaStore.Audio.AudioColumns.TITLE
-        //        + " COLLATE LOCALIZED ASC";
-
-        //query external audio
-        ContentResolver musicResolver = context.getContentResolver();
-        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-
-        Cursor musicCursor = musicResolver.query(musicUri, null, selection, null, null);
-        //iterate over results if valid
-        if (musicCursor != null && musicCursor.moveToFirst()) {
-            //get columns
-            int titleColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.TITLE);
-            int artistColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.ARTIST);
-            int albumColumn = musicCursor.getColumnIndex
-                    (MediaStore.Audio.Media.ALBUM);
-            int idColumn = musicCursor.getColumnIndex
-                    (MediaStore.Audio.Media.DURATION);
-            int dataColumn = musicCursor.getColumnIndex
-                    (MediaStore.Audio.Media.DATA);
-            //add songs to list
-            do {
-                String thisTitle = musicCursor.getString(titleColumn);
-                String thisArtist = musicCursor.getString(artistColumn);
-                String thisAlbum = musicCursor.getString(albumColumn);
-                long thisDuration= musicCursor.getLong(idColumn);
-                String thisData = musicCursor.getString(dataColumn);
-
-                songList.add(new Song(thisDuration, thisTitle, thisArtist,thisAlbum,thisData));
-            }
-            while (musicCursor.moveToNext());
-        }
-    }
 
 
 }

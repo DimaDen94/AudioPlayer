@@ -55,8 +55,7 @@ public class SongsAdapter extends BaseAdapter implements Filterable {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         //map to song layout
-        LinearLayout songLay = (LinearLayout)songInf.inflate
-                (R.layout.item, parent, false);
+        LinearLayout songLay = (LinearLayout)songInf.inflate(R.layout.item, parent, false);
         //get title and artist views
         TextView songView = (TextView)songLay.findViewById(R.id.tv_item_title);
         TextView artistView = (TextView)songLay.findViewById(R.id.tv_item_artist);
