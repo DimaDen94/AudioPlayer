@@ -228,6 +228,10 @@ public class MusicService extends Service implements
     public void go() {
         player.start();
     }
+    public void stop() {
+        player.seekTo(0);
+        player.pause();
+    }
 
     //skip to previous track
     public void playPrev() {

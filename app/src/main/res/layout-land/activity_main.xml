@@ -1,0 +1,59 @@
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/backGround"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/view">
+
+        <android.support.v7.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?actionBarSize"
+            android:background="@color/primary"
+            android:titleTextColor="@color/color_dark"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark">
+
+        </android.support.v7.widget.Toolbar>
+        <include layout="@layout/after_tool_bar"/>
+
+    </android.support.design.widget.AppBarLayout>
+
+    <RelativeLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+        android:layout_below="@+id/view">
+        <ListView
+
+            android:layout_width="310dp"
+            android:layout_height="match_parent"
+            android:id="@+id/audioList"
+            android:isScrollContainer="false"
+            android:background="@color/for_list"
+            android:drawSelectorOnTop="false"
+
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_toLeftOf="@+id/include"
+            android:layout_toStartOf="@+id/include" />
+
+        <include layout="@layout/player"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/include"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_below="@+id/view" />
+
+    </RelativeLayout>
+
+</RelativeLayout>
+

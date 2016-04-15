@@ -21,7 +21,6 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -42,9 +41,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private SearchView mSearchView;
 
     //btn
-    private ImageButton buttonPlayStop;
+    private ImageButton buttonPlayPause;
     private ImageButton buttonNext;
     private ImageButton buttonPrevious;
+    private ImageButton buttonStop;
     //create format
     private SimpleDateFormat format = new SimpleDateFormat("mm:ss");
 
@@ -107,13 +107,15 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private void initViews() {
         switchCompat = (SwitchCompat) findViewById(R.id.switch_compat);
         //buttons
-        buttonPlayStop = (ImageButton) findViewById(R.id.btn_play_and_pause);
+        buttonPlayPause = (ImageButton) findViewById(R.id.btn_play_and_pause);
         buttonNext = (ImageButton) findViewById(R.id.btn_next);
         buttonPrevious = (ImageButton) findViewById(R.id.btn_previous);
+        buttonStop = (ImageButton) findViewById(R.id.btn_stop);
 
-        buttonPlayStop.setOnClickListener(this);
+        buttonPlayPause.setOnClickListener(this);
         buttonNext.setOnClickListener(this);
         buttonPrevious.setOnClickListener(this);
+        buttonStop.setOnClickListener(this);
 
         buttonChooseTheFolder = (Button) findViewById(R.id.btn_choose_the_folder);
 
@@ -146,10 +148,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
                 //change icon in list view
                 for (int i = 0; i < songsList.size(); i++) {
-                    imgNoteOrPlay = (ImageView) parent.getChildAt(i).findViewById(R.id.img_note_play);
-                    imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
-                    if (i == position)
-                        imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
+//                    imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
+//                    imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
+//                    if (i == position)
+//                        imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
                 }
 
 
@@ -279,6 +281,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         Date datePos = new Date(pos);
         Date dateDur = new Date(dur);
 
+        if(musicService.isPng())
+            buttonPlayPause.setImageResource(R.mipmap.ic_pause);
+        else
+            buttonPlayPause.setImageResource(R.mipmap.ic_play);
+
+
         //update time
         tvRunningTime.setText(String.valueOf(format.format(datePos)));
         tvTotalTime.setText(String.valueOf(format.format(dateDur)));
@@ -295,18 +303,22 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
         int position = -1;
 
-        Song currSong = musicService.getSong();
-        for (int i = 0; i < songsList.size(); i++) {
-            if (songsList.get(i).equals(currSong))
-                position = i;
-        }
+        try {
+            Song currSong = musicService.getSong();
+            for (int i = 0; i < songsList.size(); i++) {
+                if (songsList.get(i).equals(currSong))
+                    position = i;
+            }
+        }catch (Exception e){}
+
+
 
         if (position >= 0) {
             for (int i = 0; i < songsList.size(); i++) {
-                imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
-                imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
-                if (i == position)
-                    imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
+//                imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
+//                imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
+//                if (i == position)
+//                    imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
             }
         }
 
@@ -375,6 +387,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 musicService.playPrev();
                 break;
             case R.id.btn_stop:
+                musicService.stop();
                 break;
         }
         if (!isProgress)

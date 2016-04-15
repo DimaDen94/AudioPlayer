@@ -17,6 +17,7 @@
         android:layout_height="match_parent">
 
         <TextView
+            android:singleLine="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tv_song_title_item"
@@ -25,6 +26,7 @@
             android:textSize="18sp" />
 
         <TextView
+            android:singleLine="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tv_artist_item"
@@ -33,6 +35,7 @@
             android:textSize="18sp" />
 
         <TextView
+            android:singleLine="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tv_duration_item"
