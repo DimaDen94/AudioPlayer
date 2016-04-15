@@ -147,6 +147,10 @@ public class MusicService extends Service implements
         playSong();
     }
 
+    public Song getSong() {
+        return songs.get(songPosn);
+    }
+
     @Override
     public void onCompletion(MediaPlayer mp) {
         //check if playback has reached the end of a track

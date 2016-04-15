@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -15,7 +14,6 @@ import android.support.v7.widget.SearchView;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -28,6 +26,7 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.example.dmitry.audioplayer.adapters.SongsAdapter;
 import com.example.dmitry.audioplayer.model.MusicProvider;
 
 import java.text.SimpleDateFormat;
@@ -35,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 
-public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, View.OnClickListener {
     private Toolbar toolbar;
     private AlertDialog alertDialog;
 
@@ -65,8 +64,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private TextView tvTotalTime;
 
     //lists
-    private ArrayList<Song> allSongsList;
-    private ArrayList<Song> folderSongsList;
     private ArrayList<Song> songsList;
     private String folder;
 
@@ -82,6 +79,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private Button buttonChooseTheFolder;
 
     private SwitchCompat switchCompat;
+
+    AdapterView adapterView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppDefault);
@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         buttonChooseTheFolder = (Button) findViewById(R.id.btn_choose_the_folder);
 
         //TV
-        tvTitle = (TextView)findViewById(R.id.tvSongTitle);
+        tvTitle = (TextView) findViewById(R.id.tvSongTitle);
         tvArtist = (TextView) findViewById(R.id.tvArtist);
         tvAlbum = (TextView) findViewById(R.id.tvAlbum);
         tvRunningTime = (TextView) findViewById(R.id.tvTimePlayed);
@@ -132,23 +132,25 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
 
     }
+
     private void initHandlers() {
         playList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
+
                 musicService.setList(songsList);
 
-                for(int i = 0; i < songsList.size(); i ++){
-                    imgNoteOrPlay=(ImageView)parent.getChildAt(i).findViewById(R.id.img_note_play);
-                    imgNoteOrPlay.setImageResource(R.mipmap.ic_note);
+                adapterView = parent;
+
+
+                //change icon in list view
+                for (int i = 0; i < songsList.size(); i++) {
+                    imgNoteOrPlay = (ImageView) parent.getChildAt(i).findViewById(R.id.img_note_play);
+                    imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
+                    if (i == position)
+                        imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
                 }
-
-
-
-                LinearLayout songLay = (LinearLayout) view;
-                imgNoteOrPlay = (ImageView) songLay.findViewById(R.id.img_note_play);
-                imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
 
 
                 ArrayList<Song> filteredSongs = adapter.getFilteredSongs();
@@ -185,10 +187,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         switchCompat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){
+                if (isChecked) {
                     setDataToAdapter(provider.getSongsSortedByTitle(folder));
                     isFolder = true;
-                }else {
+                } else {
                     setDataToAdapter(provider.getSongsSortedByTitle());
                     isFolder = false;
                 }
@@ -200,23 +202,20 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         //instantiate list
         provider = new MusicProvider(this);
 
-        allSongsList = provider.getSongsSortedByTitle();
-        folderSongsList = new ArrayList<>();
+        songsList = provider.getSongsSortedByTitle();
 
-        songsList = allSongsList;
         //create and set adapter
         adapter = new SongsAdapter(this, songsList);
         playList.setAdapter(adapter);
         playList.setTextFilterEnabled(true);
         adapter.notifyDataSetChanged();
     }
-    private void setupSearchView()
-    {
-        mSearchView=(SearchView) findViewById(R.id.search);
-        mSearchView.setOnQueryTextListener(this);
-        //mSearchView.setSubmitButtonEnabled(true);
 
+    private void setupSearchView() {
+        mSearchView = (SearchView) findViewById(R.id.search);
+        mSearchView.setOnQueryTextListener(this);
     }
+
     private void initToolbar() {
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -230,6 +229,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             }
         });
     }
+
     private ServiceConnection musicConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -237,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             //get service
             musicService = binder.getService();
             //pass list
-            if(!isListSet) {
+            if (!isListSet) {
                 musicService.setList(songsList);
                 isListSet = true;
             }
@@ -293,6 +293,24 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         tvArtist.setText(musicService.getArtist());
         tvAlbum.setText(musicService.getAlbum());
 
+        int position = -1;
+
+        Song currSong = musicService.getSong();
+        for (int i = 0; i < songsList.size(); i++) {
+            if (songsList.get(i).equals(currSong))
+                position = i;
+        }
+
+        if (position >= 0) {
+            for (int i = 0; i < songsList.size(); i++) {
+                imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
+                imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
+                if (i == position)
+                    imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
+            }
+        }
+
+
         Runnable notification = new Runnable() {
             public void run() {
                 startPlayProgressUpdater();
@@ -303,8 +321,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
 
-    private void createDialog(){
-        final String[] sort ={"Title", "Artist", "Album","Running time"};
+    private void createDialog() {
+        final String[] sort = {"Title", "Artist", "Album", "Running time"};
         provider = new MusicProvider(this);
         provider.getFolders();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -314,27 +332,27 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case 0:
-                        if(isFolder){
+                        if (isFolder) {
                             setDataToAdapter(provider.getSongsSortedByTitle(folder));
-                        }else
+                        } else
                             setDataToAdapter(provider.getSongsSortedByTitle());
                         break;
                     case 1:
-                        if(isFolder){
+                        if (isFolder) {
                             setDataToAdapter(provider.getSongsSortedByArtist(folder));
-                        }else
+                        } else
                             setDataToAdapter(provider.getSongsSortedByArtist());
                         break;
                     case 2:
-                        if(isFolder){
+                        if (isFolder) {
                             setDataToAdapter(provider.getSongsSortedByAlbum(folder));
-                        }else
+                        } else
                             setDataToAdapter(provider.getSongsSortedByAlbum());
                         break;
                     case 3:
-                        if(isFolder){
+                        if (isFolder) {
                             setDataToAdapter(provider.getSongsSortedByDuration(folder));
-                        }else
+                        } else
                             setDataToAdapter(provider.getSongsSortedByDuration());
                         break;
                 }
@@ -365,7 +383,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (data == null) {return;}
+        if (data == null) {
+            return;
+        }
         folder = data.getStringExtra("folder");
         switchCompat.setChecked(false);
         switchCompat.setChecked(true);

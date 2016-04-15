@@ -1,4 +1,4 @@
-package com.example.dmitry.audioplayer;
+package com.example.dmitry.audioplayer.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -10,6 +10,9 @@ import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.example.dmitry.audioplayer.R;
+import com.example.dmitry.audioplayer.Song;
 
 import java.util.ArrayList;
 
@@ -68,7 +71,7 @@ public class SongsAdapter extends BaseAdapter implements Filterable {
         songView.setText(currSong.getTitle());
         artistView.setText(currSong.getArtist());
         durationView.setText(currSong.getTime());
-        imageView.setImageResource(R.mipmap.ic_note);
+        imageView.setImageResource(R.mipmap.ic_note_black);
         //set position as tag
         songLay.setTag(position);
         return songLay;

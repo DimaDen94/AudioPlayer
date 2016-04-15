@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
 
+import com.example.dmitry.audioplayer.adapters.FoldersAdapter;
 import com.example.dmitry.audioplayer.model.MusicProvider;
 
 public class FoldersActivity extends AppCompatActivity {
