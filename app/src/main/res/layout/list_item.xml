@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal" android:layout_width="match_parent"
-    android:layout_height="40dp">
+    android:layout_height="60dp">
 
     <ImageView
         android:focusable="false"
         android:focusableInTouchMode="false"
         android:layout_width="70dp"
-        android:layout_height="40dp"
+        android:layout_height="60dp"
         android:id="@+id/img_note_play"
         android:contentDescription="@string/text_btn_play" />
 
@@ -22,7 +22,7 @@
             android:layout_height="wrap_content"
             android:text="@string/tv_song_title_item"
             android:id="@+id/tv_item_title"
-            android:textSize="11sp"
+            android:textSize="14dp"
             android:layout_gravity="left" />
 
         <TextView
@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:text="@string/tv_artist_item"
             android:id="@+id/tv_item_artist"
-            android:textSize="10sp"
+            android:textSize="12dp"
             android:layout_gravity="left" />
 
         <TextView
@@ -40,7 +40,8 @@
             android:layout_height="wrap_content"
             android:text="@string/tv_duration_item"
             android:id="@+id/tv_item_duration"
-            android:textSize="10sp"
-            android:layout_gravity="left" />
+            android:textSize="12dp"
+            android:layout_gravity="left"
+            android:layout_marginTop="5dp" />
     </LinearLayout>
 </LinearLayout>

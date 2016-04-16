@@ -27,4 +27,8 @@
     <string name="tv_duration_item">Running time</string>
     <string name="title_activity_search">SearchActivity</string>
     <string name="title_activity_folders">FoldersActivity</string>
+    <string name="text_btn_folder">choose the folder</string>
+    <string name="text_switch">ONLY FOLDER</string>
+    <string name="text_folder">folder</string>
+    <string name="text_path">Path</string>
 </resources>

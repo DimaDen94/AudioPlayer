@@ -1,5 +1,6 @@
 package com.example.dmitry.audioplayer;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
@@ -49,11 +50,14 @@ public class MusicService extends Service implements
     private static final int NOTIFY_ID = 1;
     //shuffle flag and random
     private boolean shuffle = false;
+
+    //if was started player
+    private boolean isStarted = false;
+
+    //for random song
     private Random rand;
 
-    public ArrayList<Song> getSongs() {
-        return songs;
-    }
+
 
     public String getTitle() {
         return title;
@@ -119,6 +123,7 @@ public class MusicService extends Service implements
 
     //play a song
     public void playSong() {
+        isStarted =true;
         //play
         player.reset();
         //get song
@@ -147,6 +152,19 @@ public class MusicService extends Service implements
     public void setSong(int songIndex) {
         songPosn = songIndex;
         playSong();
+    }
+    public void setSong(File path) {
+
+        try {
+            player.reset();
+            player.setDataSource(path.getAbsolutePath());
+            player.prepare();
+            player.start();
+            isStarted =true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public Song getSong() {
@@ -271,4 +289,7 @@ public class MusicService extends Service implements
         else shuffle = true;
     }
 
+    public boolean isStarted() {
+        return isStarted;
+    }
 }

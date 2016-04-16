@@ -5,9 +5,11 @@
     <color name="for_list">#FFA726</color>
 
     <color name="btn_folder">#FFB300</color>
+    <color name="press_btn_folder">#ffe313</color>
 
     <color name="player">#64DD17</color>
     <color name="players_btn">#64DD17</color>
+    <color name="press_players_btn">#d3dd0a</color>
 
     <color name="backGround">#7a7a7a</color>
     <color name="color_dark">#000000</color>

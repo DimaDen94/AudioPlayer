@@ -8,12 +8,15 @@
         android:layout_height="120dp"
         android:id="@+id/imageView"
         android:background="@mipmap/ic_folder"
-        android:layout_gravity="center_horizontal" />
+        android:layout_gravity="center_horizontal"
+        android:contentDescription="@string/text_folder" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="New Text"
+        android:text="@string/text_path"
         android:id="@+id/textView"
-        android:layout_gravity="center_horizontal" />
+        android:layout_gravity="center_horizontal"
+        android:singleLine="true"
+        />
 </LinearLayout>

@@ -42,7 +42,7 @@ public class FoldersAdapter extends BaseAdapter{
 
         //map to song layout
         LinearLayout songLay = (LinearLayout) foldersInf.inflate
-                (R.layout.grid, parent, false);
+                (R.layout.grid_item, parent, false);
         //get title and artist views
         TextView songView = (TextView)songLay.findViewById(R.id.textView);
 

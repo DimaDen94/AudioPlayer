@@ -14,6 +14,7 @@ import android.support.v7.widget.SearchView;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -28,6 +29,7 @@ import android.widget.TextView;
 import com.example.dmitry.audioplayer.adapters.SongsAdapter;
 import com.example.dmitry.audioplayer.model.MusicProvider;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -55,7 +57,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     private SeekBar seekBar;
 
-    private final Handler handler = new Handler();
+    private Handler handler;
+    private Runnable runnable;
 
     private TextView tvTitle;
     private TextView tvArtist;
@@ -75,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     private boolean isListSet = false;
     private boolean isFolder = false;
+    private boolean isBound = false;
 
     private Button buttonChooseTheFolder;
 
@@ -89,11 +93,17 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         setContentView(R.layout.activity_main);
 
         //intent
-        if (playIntent == null) {
+        if (playIntent == null&&!isBound) {
             playIntent = new Intent(this, MusicService.class);
             bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
             startService(playIntent);
+
         }
+
+
+
+        progressUpdater();
+
         initViews();
         initList();
         initHandlers();
@@ -102,6 +112,76 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         createDialog();
         initToolbar();
         setupSearchView();
+
+    }
+
+
+    private void progressUpdater(){
+        handler = new Handler();
+        runnable = new Runnable() {
+
+            @Override
+            public void run() {
+                if (isBound == true&&musicService.isStarted()){ // Check if service bounded
+                    //get time
+                    int pos = musicService.getPosn();
+                    int dur = musicService.getDur();
+                    Date datePos = new Date(pos);
+                    Date dateDur = new Date(dur);
+
+                    if (musicService.isPng())
+                        buttonPlayPause.setImageResource(R.mipmap.ic_pause);
+                    else
+                        buttonPlayPause.setImageResource(R.mipmap.ic_play);
+
+
+                    //update time
+                    tvRunningTime.setText(String.valueOf(format.format(datePos)));
+                    tvTotalTime.setText(String.valueOf(format.format(dateDur)));
+
+
+                    //update seek bar
+                    seekBar.setProgress(pos);
+                    seekBar.setMax(dur);
+
+                    //update tv
+                    tvTitle.setText(musicService.getTitle());
+                    tvArtist.setText(musicService.getArtist());
+                    tvAlbum.setText(musicService.getAlbum());
+
+                    int position = -1;
+
+                    try {
+                        Song currSong = musicService.getSong();
+                        for (int i = 0; i < songsList.size(); i++) {
+                            if (songsList.get(i).equals(currSong))
+                                position = i;
+                        }
+                    } catch (Exception e) {
+                    }
+
+
+                    try {
+                        if (position >= 0) {
+                            for (int i = 0; i < playList.getCount(); i++) {
+                                imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
+                                imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
+                                if (i == position)
+                                    imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
+                            }
+                        }
+                    } catch (Exception e) {
+                    }
+
+
+
+                }else if(isBound == false){ // if service is not bounded log it
+                    Log.v("Still waiting to bound", Boolean.toString(isBound));
+                }
+                handler.postDelayed(this, 1000);
+            }
+        };
+        handler.postDelayed(runnable, 500);
     }
 
     private void initViews() {
@@ -115,7 +195,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         buttonPlayPause.setOnClickListener(this);
         buttonNext.setOnClickListener(this);
         buttonPrevious.setOnClickListener(this);
-        buttonStop.setOnClickListener(this);
+        if(buttonStop!= null)
+            buttonStop.setOnClickListener(this);
 
         buttonChooseTheFolder = (Button) findViewById(R.id.btn_choose_the_folder);
 
@@ -139,30 +220,25 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         playList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-
                 musicService.setList(songsList);
-
                 adapterView = parent;
-
-                try{
-                //change icon in list view
-                for (int i = 0; i < songsList.size(); i++) {
-                    imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
-                    imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
-                    if (i == position)
+                try {
+                    //change icon in list view
+                    for (int i = 0; i < songsList.size(); i++) {
+                        imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
+                        imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
+                        if (i == position)
                         imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
+                    }
+                } catch (Exception e) {
                 }
-                }catch (Exception e){}
 
                 ArrayList<Song> filteredSongs = adapter.getFilteredSongs();
                 if (filteredSongs != null)
                     musicService.setList(filteredSongs);
 
                 musicService.setSong(position);
-                if (!isProgress) {
-                    startPlayProgressUpdater();
-                }
+
             }
         });
         seekBar.setOnTouchListener(new View.OnTouchListener() {
@@ -171,8 +247,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 if (musicService.isPng()) {
                     SeekBar sb = (SeekBar) v;
                     musicService.seek(sb.getProgress());
-                    if (!isProgress)
-                        startPlayProgressUpdater();
                 }
                 return false;
             }
@@ -243,10 +317,28 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 musicService.setList(songsList);
                 isListSet = true;
             }
+
+            //after open with
+            if (Intent.ACTION_VIEW.equals(getIntent().getAction()))
+            {
+                File file = new File(getIntent().getData().getPath());
+                for(int i =0; i < songsList.size(); i++){
+                    if(songsList.get(i).getData().equals(file.getAbsolutePath())){
+                        musicService.setSong(i);
+                    }
+                }
+
+                isFolder = true;
+
+            }
+            //check
+            isBound = true;
+
         }
 
         public void onServiceDisconnected(ComponentName name) {
             isListSet = false;
+            isBound = false;
         }
     };
 
@@ -273,72 +365,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
         }
     }
-
-    private void startPlayProgressUpdater() {
-
-        //if started
-        isProgress = true;
-
-        //get time
-        int pos = musicService.getPosn();
-        int dur = musicService.getDur();
-        Date datePos = new Date(pos);
-        Date dateDur = new Date(dur);
-
-        if (musicService.isPng())
-            buttonPlayPause.setImageResource(R.mipmap.ic_pause);
-        else
-            buttonPlayPause.setImageResource(R.mipmap.ic_play);
-
-
-        //update time
-        tvRunningTime.setText(String.valueOf(format.format(datePos)));
-        tvTotalTime.setText(String.valueOf(format.format(dateDur)));
-
-
-        //update seek bar
-        seekBar.setProgress(pos);
-        seekBar.setMax(dur);
-
-        //update tv
-        tvTitle.setText(musicService.getTitle());
-        tvArtist.setText(musicService.getArtist());
-        tvAlbum.setText(musicService.getAlbum());
-
-        int position = -1;
-
-        try {
-            Song currSong = musicService.getSong();
-            for (int i = 0; i < songsList.size(); i++) {
-                if (songsList.get(i).equals(currSong))
-                    position = i;
-            }
-        } catch (Exception e) {
-        }
-
-
-        try {
-            if (position >= 0) {
-                for (int i = 0; i < playList.getCount(); i++) {
-                    imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
-                    imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
-                    if (i == position)
-                        imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
-                }
-            }
-        } catch (Exception e) {
-        }
-
-
-        Runnable notification = new Runnable() {
-            public void run() {
-                startPlayProgressUpdater();
-            }
-        };
-        handler.postDelayed(notification, 950);
-
-    }
-
 
     private void createDialog() {
         final String[] sort = {"Title", "Artist", "Album", "Running time"};
@@ -397,8 +423,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 musicService.stop();
                 break;
         }
-        if (!isProgress)
-            startPlayProgressUpdater();
+
     }
 
     @Override
@@ -430,7 +455,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(musicConnection);
-        stopService(playIntent);
+        handler.removeCallbacks(runnable);
+        if(musicService!=null&&!musicService.isPng()) {
+            unbindService(musicConnection);
+            stopService(playIntent);
+        }
     }
+
+
 }

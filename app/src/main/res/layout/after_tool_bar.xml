@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:checked="false"
-        android:text="ONLY FOLDER"
+        android:text="@string/text_switch"
         android:textOff=""
         android:textOn=""
         app:showText="true"
@@ -24,10 +24,10 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="choose the folder"
+        android:text="@string/text_btn_folder"
         android:id="@+id/btn_choose_the_folder"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:background="@color/design_fab_stroke_top_inner_color" />
+        android:background="@drawable/button_folder" />
 </RelativeLayout>
