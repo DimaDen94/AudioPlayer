@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -259,6 +261,8 @@ public class MusicService extends Service implements
     @Override
     public void onDestroy() {
         stopForeground(true);
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancel(NOTIFY_ID);
     }
 
     //toggle shuffle

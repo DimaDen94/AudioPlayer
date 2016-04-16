@@ -128,11 +128,11 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
         //play list and seek bar
         playList = (ListView) findViewById(R.id.audioList);
-        playList.setHorizontalScrollBarEnabled(true);
+
 
         seekBar = (SeekBar) findViewById(R.id.seekBar);
 
-
+        buttonPlayPause.setImageResource(R.mipmap.ic_play);
     }
 
     private void initHandlers() {
@@ -145,15 +145,15 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
                 adapterView = parent;
 
-
+                try{
                 //change icon in list view
                 for (int i = 0; i < songsList.size(); i++) {
-//                    imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
-//                    imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
-//                    if (i == position)
-//                        imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
+                    imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
+                    imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
+                    if (i == position)
+                        imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
                 }
-
+                }catch (Exception e){}
 
                 ArrayList<Song> filteredSongs = adapter.getFilteredSongs();
                 if (filteredSongs != null)
@@ -252,9 +252,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     public void setDataToAdapter(ArrayList<Song> data) {
         onQueryTextChange("");
-        mSearchView.clearFocus();
+        //mSearchView.clearFocus();
         adapter.setSongs(data);
-        playList.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
         songsList = data;
     }
 
@@ -262,11 +262,15 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         if (!musicService.isPng()) {
             try {
                 musicService.go();
+                buttonPlayPause.setImageResource(R.mipmap.ic_pause);
             } catch (IllegalStateException e) {
                 musicService.pausePlayer();
+                buttonPlayPause.setImageResource(R.mipmap.ic_play);
             }
         } else {
             musicService.pausePlayer();
+            buttonPlayPause.setImageResource(R.mipmap.ic_play);
+
         }
     }
 
@@ -281,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         Date datePos = new Date(pos);
         Date dateDur = new Date(dur);
 
-        if(musicService.isPng())
+        if (musicService.isPng())
             buttonPlayPause.setImageResource(R.mipmap.ic_pause);
         else
             buttonPlayPause.setImageResource(R.mipmap.ic_play);
@@ -309,17 +313,20 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 if (songsList.get(i).equals(currSong))
                     position = i;
             }
-        }catch (Exception e){}
+        } catch (Exception e) {
+        }
 
 
-
-        if (position >= 0) {
-            for (int i = 0; i < songsList.size(); i++) {
-//                imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
-//                imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
-//                if (i == position)
-//                    imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
+        try {
+            if (position >= 0) {
+                for (int i = 0; i < playList.getCount(); i++) {
+                    imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
+                    imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
+                    if (i == position)
+                        imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
+                }
             }
+        } catch (Exception e) {
         }
 
 
@@ -418,5 +425,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             playList.setFilterText(newText);
         }
         return true;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(musicConnection);
+        stopService(playIntent);
     }
 }

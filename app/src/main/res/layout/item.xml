@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal" android:layout_width="match_parent"
-    android:layout_height="70dp">
+    android:layout_height="40dp">
 
     <ImageView
         android:focusable="false"
         android:focusableInTouchMode="false"
         android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_height="40dp"
         android:id="@+id/img_note_play"
         android:contentDescription="@string/text_btn_play" />
 
@@ -22,8 +22,8 @@
             android:layout_height="wrap_content"
             android:text="@string/tv_song_title_item"
             android:id="@+id/tv_item_title"
-            android:layout_gravity="center_horizontal"
-            android:textSize="18sp" />
+            android:textSize="11sp"
+            android:layout_gravity="left" />
 
         <TextView
             android:singleLine="true"
@@ -31,8 +31,8 @@
             android:layout_height="wrap_content"
             android:text="@string/tv_artist_item"
             android:id="@+id/tv_item_artist"
-            android:layout_gravity="center_horizontal"
-            android:textSize="18sp" />
+            android:textSize="10sp"
+            android:layout_gravity="left" />
 
         <TextView
             android:singleLine="true"
@@ -40,8 +40,7 @@
             android:layout_height="wrap_content"
             android:text="@string/tv_duration_item"
             android:id="@+id/tv_item_duration"
-            android:layout_gravity="right"
-            android:textSize="18sp"
-            android:layout_marginRight="16dp" />
+            android:textSize="10sp"
+            android:layout_gravity="left" />
     </LinearLayout>
 </LinearLayout>
