@@ -52,8 +52,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
 
     private ImageView imgNoteOrPlay;
-    //is working progress update
-    private boolean isProgress = false;
 
     private SeekBar seekBar;
 
@@ -67,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private TextView tvTotalTime;
 
     //lists
-    private ArrayList<Song> songsList;
+    private volatile ArrayList<Song> songsList;
     private String folder;
 
     private ListView playList;
@@ -79,42 +77,41 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private boolean isListSet = false;
     private boolean isFolder = false;
     private boolean isBound = false;
+    private boolean isStarted = false;
 
     private Button buttonChooseTheFolder;
 
     private SwitchCompat switchCompat;
-
-    AdapterView adapterView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppDefault);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        progressUpdater();
-
         initViews();
         initList();
         initHandlers();
-
-
         createDialog();
         initToolbar();
         setupSearchView();
-
-
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        //intent
+        //bind and start service
         if (playIntent == null && !isBound) {
-            playIntent = new Intent(this, MusicService.class);
-            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-            startService(playIntent);
+            try {
+                playIntent = new Intent(this, MusicService.class);
+                bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+                startService(playIntent);
+            }catch (Exception e){
+                Log.e("myLog", "bind error");
+
+            }
         }
+        //update seek bar and other
+        progressUpdater();
     }
 
     @Override
@@ -129,13 +126,14 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         super.onSaveInstanceState(outState);
         outState.putString("folder", folder);
         outState.putBoolean("isBound", isBound);
-
+        outState.putBoolean("isStarted", isStarted);
     }
 
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         folder = savedInstanceState.getString("folder");
         isBound = savedInstanceState.getBoolean("isBound");
+        isStarted = savedInstanceState.getBoolean("isStarted");
     }
 
     private void progressUpdater() {
@@ -144,58 +142,52 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
             @Override
             public void run() {
-                try {
-                    if (isBound == true && musicService.isStarted()) { // Check if service bounded
-                        //get time
-                        int pos = musicService.getPosn();
-                        int dur = musicService.getDur();
-                        Date datePos = new Date(pos);
-                        Date dateDur = new Date(dur);
+                if (isBound == true && musicService.isStarted()) { // Check if service bounded
+                    //get time
+                    int pos = musicService.getPosn();
+                    int dur = musicService.getDur();
+                    Date datePos = new Date(pos);
+                    Date dateDur = new Date(dur);
 
-                        if (musicService.isPng())
-                            buttonPlayPause.setImageResource(R.mipmap.ic_pause);
-                        else
-                            buttonPlayPause.setImageResource(R.mipmap.ic_play);
-
-
-                        //update time
-                        tvRunningTime.setText(String.valueOf(format.format(datePos)));
-                        tvTotalTime.setText(String.valueOf(format.format(dateDur)));
+                    if (musicService.isPng())
+                        buttonPlayPause.setImageResource(R.mipmap.ic_pause);
+                    else
+                        buttonPlayPause.setImageResource(R.mipmap.ic_play);
 
 
-                        //update seek bar
-                        seekBar.setProgress(pos);
-                        seekBar.setMax(dur);
+                    //update time
+                    tvRunningTime.setText(String.valueOf(format.format(datePos)));
+                    tvTotalTime.setText(String.valueOf(format.format(dateDur)));
 
-                        //update tv
-                        tvTitle.setText(musicService.getTitle());
-                        tvArtist.setText(musicService.getArtist());
-                        tvAlbum.setText(musicService.getAlbum());
 
-                        int position = -1;
+                    //update seek bar
+                    seekBar.setProgress(pos);
+                    seekBar.setMax(dur);
 
+                    //update tv
+                    tvTitle.setText(musicService.getTitle());
+                    tvArtist.setText(musicService.getArtist());
+                    tvAlbum.setText(musicService.getAlbum());
+
+                    //logic fo image note or play
+                    int position = -1;
+                    try {
                         Song currSong = musicService.getSong();
                         for (int i = 0; i < songsList.size(); i++) {
                             if (songsList.get(i).equals(currSong))
                                 position = i;
                         }
-
-                        if (position >= 0) {
-                            for (int i = 0; i < playList.getCount(); i++) {
-                                imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
-                                imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
-                                if (i == position)
-                                    imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
-                            }
+                        for (int i = 0; i < songsList.size(); i++) {
+                            imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
+                            imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
+                            int nPos = position - playList.getFirstVisiblePosition();
+                            if (i == nPos)
+                                imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
                         }
-
-
-                    } else if (isBound == false) { // if service is not bounded log it
-                        Log.v("Still waiting to bound", Boolean.toString(isBound));
+                    } catch (Exception e) {
                     }
-                    handler.postDelayed(this, 1000);
-                } catch (Exception e) {
                 }
+                handler.postDelayed(this, 1000);
             }
         };
         handler.postDelayed(runnable, 500);
@@ -238,18 +230,19 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 musicService.setList(songsList);
-                adapterView = parent;
                 try {
-                    //change icon in list view
                     for (int i = 0; i < songsList.size(); i++) {
-                        imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
+
+                        imgNoteOrPlay = (ImageView) parent.getChildAt(i).findViewById(R.id.img_note_play);
                         imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
-                        if (i == position)
+                        int nPos = position - parent.getFirstVisiblePosition();
+                        if (i == nPos)
                             imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
+
                     }
                 } catch (Exception e) {
+                    Log.v("myLog", "img error");
                 }
-
                 ArrayList<Song> filteredSongs = adapter.getFilteredSongs();
                 if (filteredSongs != null)
                     musicService.setList(filteredSongs);
@@ -343,13 +336,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                         musicService.setSong(i);
                     }
                 }
-
                 isFolder = true;
-
             }
             //check
             isBound = true;
-
         }
 
         public void onServiceDisconnected(ComponentName name) {
@@ -360,7 +350,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     public void setDataToAdapter(ArrayList<Song> data) {
         onQueryTextChange("");
-        //mSearchView.clearFocus();
         songsList = data;
         adapter.setSongs(data);
         adapter.notifyDataSetChanged();
@@ -369,8 +358,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     public void playAndStop() {
         if (!musicService.isPng()) {
             try {
-                musicService.go();
+                if (!isStarted)
+                    musicService.setSong(0);
+                else
+                    musicService.go();
                 buttonPlayPause.setImageResource(R.mipmap.ic_pause);
+                isStarted = true;
             } catch (IllegalStateException e) {
                 musicService.pausePlayer();
                 buttonPlayPause.setImageResource(R.mipmap.ic_play);
@@ -473,7 +466,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         super.onDestroy();
         handler.removeCallbacks(runnable);
         if (musicService != null && !musicService.isPng()) {
-            //unbindService(musicConnection);
             stopService(playIntent);
         }
     }

@@ -156,6 +156,7 @@ public class MusicService extends Service implements
 
     //set the song
     public void setSong(int songIndex) {
+        isStarted =true;
         songPosn = songIndex;
         playSong();
     }
@@ -219,6 +220,7 @@ public class MusicService extends Service implements
     }
 
     public void stop() {
+        setNotification("Stop");
         player.seekTo(0);
         player.pause();
     }

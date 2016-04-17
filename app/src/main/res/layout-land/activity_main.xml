@@ -31,7 +31,7 @@
         android:layout_below="@+id/view">
         <ListView
 
-            android:layout_width="310dp"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/audioList"
             android:isScrollContainer="false"
