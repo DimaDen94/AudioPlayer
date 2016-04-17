@@ -92,16 +92,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //intent
-        if (playIntent == null && !isBound) {
-            playIntent = new Intent(this, MusicService.class);
-            try {
-                bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-                startService(playIntent);
-            }catch (Exception e){}
-        }
-
-
         progressUpdater();
 
         initViews();
@@ -112,11 +102,27 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         createDialog();
         initToolbar();
         setupSearchView();
-        if (folder != null) {
-            setDataToAdapter(provider.getSongsSortedByTitle(folder));
-            switchCompat.setChecked(false);
-        }
 
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        //intent
+        if (playIntent == null && !isBound) {
+            playIntent = new Intent(this, MusicService.class);
+            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(playIntent);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (folder != null && switchCompat.isChecked()) {
+            setDataToAdapter(provider.getSongsSortedByTitle(folder));
+        }
     }
 
     protected void onSaveInstanceState(Bundle outState) {
@@ -130,7 +136,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         super.onRestoreInstanceState(savedInstanceState);
         folder = savedInstanceState.getString("folder");
         isBound = savedInstanceState.getBoolean("isBound");
-
     }
 
     private void progressUpdater() {
