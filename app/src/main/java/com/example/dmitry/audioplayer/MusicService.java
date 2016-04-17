@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
+import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -33,6 +34,11 @@ public class MusicService extends Service implements
         MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
         MediaPlayer.OnCompletionListener {
 
+
+
+
+
+
     //media player
     private MediaPlayer player;
     //song list
@@ -48,16 +54,17 @@ public class MusicService extends Service implements
     //notification
     Notification not;
     private static final int NOTIFY_ID = 1;
+
     //shuffle flag and random
     private boolean shuffle = false;
 
     //if was started player
     private boolean isStarted = false;
 
+
+
     //for random song
     private Random rand;
-
-
 
     public String getTitle() {
         return title;
@@ -99,12 +106,11 @@ public class MusicService extends Service implements
     public void setList(ArrayList<Song> theSongs) {
         songs = theSongs;
     }
-
-    //binder
     public class MusicBinder extends Binder {
         MusicService getService() {
             return MusicService.this;
         }
+
     }
 
     //activity will bind to service
@@ -116,9 +122,9 @@ public class MusicService extends Service implements
     //release resources when unbind
     @Override
     public boolean onUnbind(Intent intent) {
-        player.stop();
-        player.release();
-        return false;
+        //player.stop();
+        //player.release();
+        return true;
     }
 
     //play a song
@@ -153,19 +159,7 @@ public class MusicService extends Service implements
         songPosn = songIndex;
         playSong();
     }
-    public void setSong(File path) {
 
-        try {
-            player.reset();
-            player.setDataSource(path.getAbsolutePath());
-            player.prepare();
-            player.start();
-            isStarted =true;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 
     public Song getSong() {
         return songs.get(songPosn);
@@ -192,36 +186,7 @@ public class MusicService extends Service implements
         //start playback
         mp.start();
         //notification
-        Intent notIntent = new Intent(this, MainActivity.class);
-        notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pendInt = PendingIntent.getActivity(this, 0,
-                notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        Notification.Builder builder = new Notification.Builder(this);
-
-        Intent intent = new Intent(getApplication(), MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-        if (Build.VERSION.SDK_INT < 16) {
-
-            not = new Notification.Builder(this)
-                    .setContentIntent(pendingIntent)
-                    .setContentTitle("Playing")
-                    .setContentText(title)
-                    .setTicker(title)
-                    .setOngoing(true)
-                    .setSmallIcon(R.mipmap.ic_play).getNotification();
-            startForeground(NOTIFY_ID, not);
-        } else {
-            builder.setContentIntent(pendInt)
-                    .setContentIntent(pendingIntent)
-                    .setSmallIcon(R.mipmap.ic_play)
-                    .setTicker(title)
-                    .setOngoing(true)
-                    .setContentTitle("Playing")
-                    .setContentText(title);
-            not = builder.build();
-            startForeground(NOTIFY_ID, not);
-        }
+        setNotification("Playing");
     }
 
     //playback methods
@@ -238,7 +203,10 @@ public class MusicService extends Service implements
     }
 
     public void pausePlayer() {
+
+        setNotification("Pause");
         player.pause();
+
     }
 
     public void seek(int posn) {
@@ -246,8 +214,10 @@ public class MusicService extends Service implements
     }
 
     public void go() {
+        setNotification("Playing");
         player.start();
     }
+
     public void stop() {
         player.seekTo(0);
         player.pause();
@@ -278,9 +248,12 @@ public class MusicService extends Service implements
 
     @Override
     public void onDestroy() {
-        stopForeground(true);
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancel(NOTIFY_ID);
+        if(isPng())
+            stopForeground(false);
+        else
+            stopForeground(true);
     }
 
     //toggle shuffle
@@ -291,5 +264,38 @@ public class MusicService extends Service implements
 
     public boolean isStarted() {
         return isStarted;
+    }
+
+    private void setNotification(String notTitle){
+        Intent notIntent = new Intent(this, MainActivity.class);
+        notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendInt = PendingIntent.getActivity(this, 0,
+                notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Notification.Builder builder = new Notification.Builder(this);
+
+        Intent intent = new Intent(getApplication(), MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        if (Build.VERSION.SDK_INT < 16) {
+
+            not = new Notification.Builder(this)
+                    .setContentIntent(pendingIntent)
+                    .setContentTitle(notTitle)
+                    .setContentText(title)
+                    .setTicker(title)
+                    .setOngoing(true)
+                    .setSmallIcon(R.mipmap.ic_play).getNotification();
+            startForeground(NOTIFY_ID, not);
+        } else {
+            builder.setContentIntent(pendInt)
+                    .setContentIntent(pendingIntent)
+                    .setSmallIcon(R.mipmap.ic_play)
+                    .setContentTitle(notTitle)
+                    .setTicker(title)
+                    .setOngoing(true)
+                    .setContentText(title);
+            not = builder.build();
+            startForeground(NOTIFY_ID, not);
+        }
     }
 }
