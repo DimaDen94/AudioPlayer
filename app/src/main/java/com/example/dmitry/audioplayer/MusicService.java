@@ -60,7 +60,7 @@ public class MusicService extends Service implements
 
     //if was started player
     private boolean isStarted = false;
-
+    Song playSong;
 
 
     //for random song
@@ -133,7 +133,7 @@ public class MusicService extends Service implements
         //play
         player.reset();
         //get song
-        Song playSong = songs.get(songPosn);
+        playSong = songs.get(songPosn);
         //get title, artist and album
         String data = playSong.getData();
 
@@ -163,7 +163,7 @@ public class MusicService extends Service implements
 
 
     public Song getSong() {
-        return songs.get(songPosn);
+        return playSong;
     }
 
     @Override
