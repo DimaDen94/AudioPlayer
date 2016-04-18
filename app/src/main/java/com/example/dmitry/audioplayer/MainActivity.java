@@ -36,52 +36,51 @@ import java.util.Date;
 
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, View.OnClickListener {
-    private Toolbar toolbar;
-    private AlertDialog alertDialog;
 
-    private MusicProvider provider;
-    private SearchView mSearchView;
 
     //btn
     private ImageButton buttonPlayPause;
     private ImageButton buttonNext;
     private ImageButton buttonPrevious;
     private ImageButton buttonStop;
+    private Button buttonChooseTheFolder;
+
     //create format
     private SimpleDateFormat format = new SimpleDateFormat("mm:ss");
 
-
-    private ImageView imgNoteOrPlay;
-
-    private SeekBar seekBar;
-
-    private Handler handler;
-    private Runnable runnable;
-
+    //tv
     private TextView tvTitle;
     private TextView tvArtist;
     private TextView tvAlbum;
     private TextView tvRunningTime;
     private TextView tvTotalTime;
+    private ImageView imgNoteOrPlay;
 
     //lists
     private volatile ArrayList<Song> songsList;
-    private String folder;
-
     private ListView playList;
     private SongsAdapter adapter;
+    private String folder;
 
+    //service
     private MusicService musicService;
     private Intent playIntent;
 
+    //check
     private boolean isListSet = false;
     private boolean isFolder = false;
     private boolean isBound = false;
     private boolean isStarted = false;
 
-    private Button buttonChooseTheFolder;
-
     private SwitchCompat switchCompat;
+    private SeekBar seekBar;
+    private Toolbar toolbar;
+    private AlertDialog alertDialog;
+    private SearchView mSearchView;
+
+    private Handler handler;
+    private Runnable runnable;
+    private MusicProvider provider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         initHandlers();
         createDialog();
         initToolbar();
-        setupSearchView();
+        initSearchView();
     }
 
     @Override
@@ -137,12 +136,14 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
     private void progressUpdater() {
+
         handler = new Handler();
         runnable = new Runnable() {
 
             @Override
             public void run() {
                 if (isBound == true && musicService.isStarted()) { // Check if service bounded
+
                     //get time
                     int pos = musicService.getPosn();
                     int dur = musicService.getDur();
@@ -229,6 +230,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         playList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                isStarted=true;
                 musicService.setList(songsList);
                 try {
                     for (int i = 0; i < songsList.size(); i++) {
@@ -287,7 +289,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private void initList() {
         //instantiate list
         provider = new MusicProvider(this);
-
         songsList = provider.getSongsSortedByTitle();
 
         //create and set adapter
@@ -297,13 +298,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         adapter.notifyDataSetChanged();
     }
 
-    private void setupSearchView() {
+    private void initSearchView() {
         mSearchView = (SearchView) findViewById(R.id.search);
         mSearchView.setOnQueryTextListener(this);
     }
 
     private void initToolbar() {
-
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.mipmap.ic_sort);
         toolbar.setTitle("My player");
@@ -336,7 +336,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                         musicService.setSong(i);
                     }
                 }
-                isFolder = true;
             }
             //check
             isBound = true;
@@ -432,7 +431,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 musicService.stop();
                 break;
         }
-
     }
 
     @Override

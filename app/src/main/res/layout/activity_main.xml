@@ -30,7 +30,19 @@
     android:orientation="vertical"
         android:layout_below="@+id/view"
         android:layout_above="@+id/include">
-        <include layout="@layout/list_view"/>
+        <ListView
+
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/audioList"
+            android:isScrollContainer="false"
+            android:layout_centerHorizontal="true"
+            android:layout_above="@+id/linearLayout"
+            android:background="@color/for_list"
+            android:layout_alignParentTop="true"
+            android:drawSelectorOnTop="false"
+
+            />
     </LinearLayout>
 
     <include layout="@layout/player"
