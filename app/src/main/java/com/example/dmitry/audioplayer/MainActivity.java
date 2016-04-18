@@ -171,22 +171,22 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
                     //logic fo image note or play
                     int position = -1;
-
-                    Song currSong = musicService.getSong();
-                    for (int i = 0; i < songsList.size(); i++) {
-                        if (songsList.get(i).equals(currSong))
-                            position = i;
-                    }
-                    for (int i = 0; i < songsList.size(); i++) {
-                        try {
-                            imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
-                        } catch (Exception e) {
+                    try {
+                        Song currSong = musicService.getSong();
+                        for (int i = 0; i < songsList.size(); i++) {
+                            if (songsList.get(i).equals(currSong))
+                                position = i;
                         }
-                        imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
-                        int nPos = position - playList.getFirstVisiblePosition();
-                        if (i == nPos)
-                            imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
+                        for (int i = 0; i < songsList.size(); i++) {
 
+                            imgNoteOrPlay = (ImageView) playList.getChildAt(i).findViewById(R.id.img_note_play);
+
+                            imgNoteOrPlay.setImageResource(R.mipmap.ic_note_black);
+                            int nPos = position - playList.getFirstVisiblePosition();
+                            if (i == nPos)
+                                imgNoteOrPlay.setImageResource(R.mipmap.ic_play);
+                        }
+                    } catch (Exception e) {
                     }
                 }
                 handler.postDelayed(this, 1000);
