@@ -49,7 +49,7 @@ public class FoldersAdapter extends BaseAdapter{
         //get song using position
         String currSong = arrayList.get(position);
         //get title and artist strings
-        songView.setText(currSong);
+        songView.setText(currSong.substring(currSong.lastIndexOf('/')+1,currSong.length()));
         //set position as tag
         songLay.setTag(position);
         return songLay;
